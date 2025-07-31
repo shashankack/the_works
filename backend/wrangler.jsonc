@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "backend",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-07-08",
+  "tsconfig": "tsconfig.json",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "vars": {
+    "RESEND_API_KEY": "re_DeHCP1vx_A6tR3vs6zHcpBAXeyHGJeUV6",
+    "JWT_SECRET": "embrace_the_chaos",
+    "CLOUDINARY_CLOUD_NAME": "the-works",
+    "CLOUDINARY_API_KEY": "883376318828685",
+    "CLOUDINARY_API_SECRET": "hS-jugyZXh9ntB0DXJuLScwRxZI",
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "the-works-db",
+      "database_id": "76d7b5cb-0950-466d-bd36-fbe075d24c39",
+    },
+  ],
+
+  "rules": [
+    {
+      "type": "ESModule",
+      "globs": ["**/*.ts"],
+    },
+  ],
+}

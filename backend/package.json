@@ -1,0 +1,28 @@
+{
+  "name": "backend",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --minify",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "drizzle:generate": "drizzle-kit generate",
+    "drizzle:migrate": "drizzle-kit migrate"
+  },
+  "dependencies": {
+    "bcrypt-ts": "^7.1.0",
+    "cloudinary": "^2.7.0",
+    "date-fns": "^4.1.0",
+    "dotenv": "^17.2.0",
+    "drizzle-orm": "^0.44.2",
+    "hono": "^4.8.4",
+    "jose": "^6.0.11",
+    "nanoid": "^5.1.5",
+    "resend": "^4.7.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.10",
+    "drizzle-kit": "^0.31.4",
+    "typescript": "^5.8.3",
+    "wrangler": "^4.24.3"
+  }
+}
