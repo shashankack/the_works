@@ -17,8 +17,10 @@ const PaymentPage = ({
   activity,
   price,
   selectedPack,
+  selectedPackData,
   selectedSchedule,
   selectedAddons = [],
+  selectedAddonDetails = [],
   onPaymentSuccess,
 }) => {
   const [openDialog, setOpenDialog] = useState(false);
@@ -50,7 +52,7 @@ const PaymentPage = ({
     setSuccess(false);
 
     try {
-      const { accessToken } = getToken();
+      const accessToken = getToken("accessToken");
 
       if (!accessToken) {
         setError("Please log in to complete your booking.");
@@ -66,8 +68,13 @@ const PaymentPage = ({
       const bookingPayload = {
         classId: isClass ? activity.id : undefined,
         eventId: isEvent ? activity.id : undefined,
-        classPackId: selectedPack || undefined, // Note: backend uses classPackId, not packId
+        classPackId: selectedPack || undefined, // Backend maps this to packId
+        scheduleId: selectedSchedule || undefined, // Add schedule ID
         paymentId: transactionId,
+        addonIds:
+          selectedAddons && selectedAddons.length > 0
+            ? selectedAddons
+            : undefined, // Include addons in main request
       };
 
       // Remove undefined values
@@ -75,11 +82,11 @@ const PaymentPage = ({
         (key) => bookingPayload[key] === undefined && delete bookingPayload[key]
       );
 
-      console.log("Creating booking with payload:", bookingPayload);
+      // console.log("Creating booking with payload:", bookingPayload);
 
-      // Create the booking
+      // Create the booking with addons in one call
       const bookingResponse = await axiosInstance.post(
-        "/api/bookings", // Note: backend uses /api/ prefix
+        "/bookings", // Your base URL already includes /api
         bookingPayload,
         {
           headers: {
@@ -90,25 +97,8 @@ const PaymentPage = ({
       );
 
       const bookingId = bookingResponse.data.id;
-      console.log("Booking created with ID:", bookingId);
-
-      // If there are selected add-ons, attach them to the booking
-      if (selectedAddons && selectedAddons.length > 0) {
-        console.log("Adding selected add-ons:", selectedAddons);
-        
-        await axiosInstance.post(
-          `/api/bookings/${bookingId}/addons`, // Backend expects this format
-          {
-            addonIds: selectedAddons, // Backend expects array of addon IDs
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-      }
+      // console.log("Booking created with ID:", bookingId);
+      // console.log("Addons attached:", bookingResponse.data.addonsAttached || 0);
 
       setSuccess(true);
 
@@ -159,16 +149,75 @@ const PaymentPage = ({
         {activity.title}
       </Typography>
 
-      <Typography variant="body1" gutterBottom>
-        Total Price: ₹{price}
-      </Typography>
-
-      {selectedAddons && selectedAddons.length > 0 && (
-        <Typography variant="body2" color="text.secondary" gutterBottom>
-          Includes {selectedAddons.length} add-on
-          {selectedAddons.length > 1 ? "s" : ""}
+      {/* Price Breakdown */}
+      <Box
+        sx={{
+          border: 1,
+          borderColor: "divider",
+          borderRadius: 2,
+          p: 2,
+          mb: 2,
+          bgcolor: "grey.50",
+        }}
+      >
+        <Typography variant="subtitle1" fontWeight="bold" mb={1}>
+          Booking Summary
         </Typography>
-      )}
+
+        {/* Pack Details */}
+        {selectedPackData && (
+          <Box display="flex" justifyContent="space-between" mb={1}>
+            <Typography variant="body2">
+              {selectedPackData.title} ({selectedPackData.classType})
+            </Typography>
+            <Typography variant="body2" fontWeight="bold">
+              ₹{selectedPackData.price}
+            </Typography>
+          </Box>
+        )}
+
+        {/* Addon Details */}
+        {selectedAddonDetails && selectedAddonDetails.length > 0 && (
+          <>
+            <Typography variant="body2" color="text.secondary" mt={1} mb={1}>
+              Add-ons:
+            </Typography>
+            {selectedAddonDetails.map((addon, index) => (
+              <Box
+                key={addon.id}
+                display="flex"
+                justifyContent="space-between"
+                mb={0.5}
+                ml={2}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  • {addon.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  ₹{addon.price}
+                </Typography>
+              </Box>
+            ))}
+          </>
+        )}
+
+        {/* Total */}
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          mt={2}
+          pt={1}
+          borderTop={1}
+          borderColor="divider"
+        >
+          <Typography variant="body1" fontWeight="bold">
+            Total Amount:
+          </Typography>
+          <Typography variant="body1" fontWeight="bold" color="primary">
+            ₹{price}
+          </Typography>
+        </Box>
+      </Box>
 
       <Typography variant="body2" gutterBottom>
         Pay using UPI ID:

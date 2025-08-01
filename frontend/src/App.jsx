@@ -6,7 +6,8 @@ import {
 } from "react-router-dom";
 import { Suspense } from "react";
 import Loader from "./components/Loader";
-import { getToken } from "./utils/auth";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { getToken, isAdmin, isAuthenticated } from "./utils/auth";
 
 // Layouts
 import MainLayout from "./layouts/MainLayout";
@@ -25,16 +26,6 @@ import ActivitesManagePage from "./pages/Admin/ActivitesManagePage";
 import TrainersManagePage from "./pages/Admin/TrainersManagePage";
 import BookingsManagePage from "./pages/Admin/BookingsManagePage";
 
-const ProtectedRoutes = ({ children }) => {
-  const token = getToken();
-  return token ? children : <Navigate to="/admin/login" replace />;
-};
-
-const UserProtectedRoutes = ({ children }) => {
-  const token = getToken();
-  return token ? children : <Navigate to="/login" replace />;
-};
-
 const App = () => {
   return (
     <Router>
@@ -44,9 +35,9 @@ const App = () => {
           <Route path="/admin/login" element={<Login />} />
           <Route
             element={
-              <ProtectedRoutes>
+              <ProtectedRoute requiredRole="admin">
                 <AdminLayout />
-              </ProtectedRoutes>
+              </ProtectedRoute>
             }
           >
             <Route path="/admin/dashboard" element={<Dashboard />} />
@@ -66,9 +57,9 @@ const App = () => {
           <Route
             path="/payment"
             element={
-              <UserProtectedRoutes>
+              <ProtectedRoute>
                 <PaymentPageWrapper />
-              </UserProtectedRoutes>
+              </ProtectedRoute>
             }
           />
 

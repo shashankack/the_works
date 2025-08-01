@@ -13,7 +13,8 @@ import {
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import axiosInstance from "../../api/axiosInstance";
-import { setToken } from "../../utils/auth";
+import { setToken, setUser } from "../../utils/auth";
+import { getCurrentUser } from "../../api/userService";
 import logo from "../../assets/images/orange_logo.png";
 
 const Login = () => {
@@ -41,16 +42,35 @@ const Login = () => {
 
     try {
       setLoading(true);
+      
+      // 1. Login and get tokens
       const response = await axiosInstance.post("/auth/token", {
         email,
         password,
       });
 
-      setToken(response.data.accessToken, response.data.refreshToken); // ✅ combined storage
+      // 2. Save tokens
+      setToken(response.data.accessToken, response.data.refreshToken);
+
+      // 3. Fetch user data to get role information
+      try {
+        const userData = await getCurrentUser();
+        setUser(userData);
+        
+        // 4. Check if user is actually an admin
+        if (userData.role !== "admin") {
+          setError("Oops! 🕵️‍♂️ Looks like you're trying to sneak into the admin's secret lair. Nice try, but this area is for gym bosses only! 💪");
+          return;
+        }
+      } catch (userError) {
+        console.error("Failed to fetch user data:", userError);
+        setError("Failed to verify admin privileges. Please try again.");
+        return;
+      }
 
       navigate("/admin/dashboard");
     } catch (err) {
-      setError(err.response?.data?.error);
+      setError(err.response?.data?.error || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }

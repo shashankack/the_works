@@ -92,12 +92,12 @@ auth.post("/register", validate(registerSchema), async (c) => {
   const accessToken = await signJWT(
     { userId: newUser.id, role: "user" },
     c.env.JWT_SECRET,
-    "30m"
+    "20m"
   );
   const refreshToken = await signJWT(
     { userId: newUser.id, role: "user" },
     c.env.JWT_SECRET,
-    "1d"
+    "60m"
   );
 
   return c.json({

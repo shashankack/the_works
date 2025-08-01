@@ -111,11 +111,18 @@ const RegisterForm = ({ addons = [], activity, onClose, onSubmit }) => {
 
     // Calculate total price
     const selectedPackData = packs.find((pack) => pack.id === selectedPack);
-    const addonPrices = selectedAddOns.reduce((total, addonId) => {
+    const selectedAddonDetails = selectedAddOns.map(addonId => {
       const addon = addons.find((a) => a.id === addonId);
+      return {
+        id: addon.id,
+        name: addon.name,
+        price: addon.price
+      };
+    });
+    const addonPrices = selectedAddonDetails.reduce((total, addon) => {
       return total + (addon?.price || 0);
     }, 0);
-    
+
     const totalPrice = (selectedPackData?.price || 0) + addonPrices;
 
     // Call onSubmit with booking data (without creating booking yet)
@@ -123,8 +130,10 @@ const RegisterForm = ({ addons = [], activity, onClose, onSubmit }) => {
       onSubmit({
         activity,
         selectedPack,
+        selectedPackData, // Include pack details
         selectedSchedule,
-        selectedAddons: selectedAddOns,
+        selectedAddons: selectedAddOns, // Keep IDs for backend
+        selectedAddonDetails, // Include addon details for display
         userDetails,
         totalPrice,
       });
@@ -134,7 +143,26 @@ const RegisterForm = ({ addons = [], activity, onClose, onSubmit }) => {
   return (
     <Box>
       <DialogTitle>Register for {activity?.title}</DialogTitle>
-      <DialogContent>
+      <DialogContent
+        sx={{
+          maxHeight: "70vh",
+          overflowY: "auto",
+          "&::-webkit-scrollbar": {
+            width: "8px",
+          },
+          "&::-webkit-scrollbar-track": {
+            background: "#f1f1f1",
+            borderRadius: "4px",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: "#c1c1c1",
+            borderRadius: "4px",
+            "&:hover": {
+              background: "#a8a8a8",
+            },
+          },
+        }}
+      >
         {formError && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {formError}

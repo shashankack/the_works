@@ -41,12 +41,9 @@ const BookingAddOnsManager = ({ bookingId }) => {
   const [selectedAddonId, setSelectedAddonId] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  // Fetch attached addons - this would typically be via an API endpoint
-  // For simplicity, we assume a GET /api/bookings/:id/addons returns addons attached to booking
-
   const fetchAttachedAddons = async () => {
     try {
-      const res = await fetch(`/api/bookings/${bookingId}/addons`);
+      const res = await fetch(`/bookings/${bookingId}/addons`);
       if (!res.ok) throw new Error("Failed to fetch attached add-ons");
       const data = await res.json();
       setAttachedAddons(data); // assuming data is array of addon objects
@@ -77,7 +74,7 @@ const BookingAddOnsManager = ({ bookingId }) => {
   const handleRemoveAddon = async (addonId) => {
     if (!window.confirm("Remove this add-on from booking?")) return;
     try {
-      const res = await fetch(`/api/bookings/${bookingId}/addons/${addonId}`, {
+      const res = await fetch(`/bookings/${bookingId}/addons/${addonId}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to remove addon");

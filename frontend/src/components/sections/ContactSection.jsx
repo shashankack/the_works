@@ -31,7 +31,7 @@ const ContactSection = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Form data submitted:", formData);
+    // console.log("Form data submitted:", formData);
   };
 
   return (

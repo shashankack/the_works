@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const API_URL = "/api/bookings";
+const API_URL = "/bookings";
 
 const useBookings = () => {
   const [bookings, setBookings] = useState([]);

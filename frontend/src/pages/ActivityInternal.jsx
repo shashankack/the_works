@@ -94,7 +94,7 @@ const ActivityInternal = () => {
     };
 
     fetchTrainer();
-    console.log("Trainer fetched:", trainer);
+    // console.log("Trainer fetched:", trainer);
   }, [activity?.trainerId]);
 
   const spotsLeft = activity ? activity.maxSpots - activity.bookedSpots : 0;
@@ -134,7 +134,7 @@ const ActivityInternal = () => {
     : null;
 
   const handleRegisterSubmit = async (data) => {
-    console.log("Register submit:", data);
+    // console.log("Register submit:", data);
 
     try {
       setToken(data.accessToken, data.refreshToken);

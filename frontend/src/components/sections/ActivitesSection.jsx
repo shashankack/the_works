@@ -152,15 +152,15 @@ const ActivitesSection = () => {
   }, []);
 
   useEffect(() => {
-    console.log("Classes:", classes);
-    console.log("Classes Loading:", classesLoading);
-    console.log("Classes Error:", classesError);
+    // console.log("Classes:", classes);
+    // console.log("Classes Loading:", classesLoading);
+    // console.log("Classes Error:", classesError);
   }, [classes, classesLoading, classesError]);
 
   useEffect(() => {
-    console.log("Events:", events);
-    console.log("Events Loading:", eventsLoading);
-    console.log("Events Error:", eventsError);
+    // console.log("Events:", events);
+    // console.log("Events Loading:", eventsLoading);
+    // console.log("Events Error:", eventsError);
   }, [events, eventsLoading, eventsError]);
 
   // Handler to toggle activity type
@@ -192,7 +192,7 @@ const ActivitesSection = () => {
 
   // Handler for register form submit
   const handleRegisterSubmit = (bookingData) => {
-    console.log("Proceeding to payment with data:", bookingData);
+    // console.log("Proceeding to payment with data:", bookingData);
 
     // Store booking data in sessionStorage for payment page
     sessionStorage.setItem("bookingData", JSON.stringify(bookingData));

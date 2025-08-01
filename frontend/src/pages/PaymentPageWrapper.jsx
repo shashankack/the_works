@@ -36,7 +36,7 @@ const PaymentPageWrapper = () => {
   }, [navigate]);
 
   const handlePaymentSuccess = (paymentData) => {
-    console.log("Payment successful:", paymentData);
+    // console.log("Payment successful:", paymentData);
     
     // Clear booking data from storage
     sessionStorage.removeItem('bookingData');
@@ -77,8 +77,10 @@ const PaymentPageWrapper = () => {
       activity={bookingData.activity}
       price={bookingData.totalPrice}
       selectedPack={bookingData.selectedPack}
+      selectedPackData={bookingData.selectedPackData}
       selectedSchedule={bookingData.selectedSchedule}
       selectedAddons={bookingData.selectedAddons}
+      selectedAddonDetails={bookingData.selectedAddonDetails}
       onPaymentSuccess={handlePaymentSuccess}
     />
   );

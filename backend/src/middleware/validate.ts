@@ -114,7 +114,9 @@ export const bookingSchema = z
     eventId: z.string().optional(),
     classTypeId: z.string().optional(),
     classPackId: z.string().optional(),
+    scheduleId: z.string().optional(),
     paymentId: z.string().optional(),
+    addonIds: z.array(z.string()).optional(),
   })
   .strict();
 

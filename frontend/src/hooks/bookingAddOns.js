@@ -9,7 +9,7 @@ const useBookingAddOns = () => {
   const addAddonsToBooking = async (bookingId, addonIds) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/bookings/${bookingId}/addons`, {
+      const res = await fetch(`/bookings/${bookingId}/addons`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
