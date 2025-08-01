@@ -1,15 +1,15 @@
 import { useCachedApi } from "./useCachedApi";
-import { getAllClasses } from "../api/classService";
+import axiosInstance from "../api/axiosInstance";
 
-export const useClasses = (options = {}) => {
+export const useCachedBookings = (options = {}) => {
   const {
-    ttl = 5 * 60 * 1000, // 5 minutes default cache
+    ttl = 2 * 60 * 1000, // 2 minutes for more dynamic data
     immediate = true,
     ...restOptions
   } = options;
 
   const {
-    data: classes,
+    data: bookings,
     loading,
     error,
     fetchData,
@@ -19,9 +19,9 @@ export const useClasses = (options = {}) => {
     isStale,
     isCached
   } = useCachedApi(
-    'classes',
+    'bookings',
     async () => {
-      const response = await getAllClasses();
+      const response = await axiosInstance.get('/bookings');
       return response.data;
     },
     {
@@ -32,14 +32,16 @@ export const useClasses = (options = {}) => {
   );
 
   return { 
-    classes: classes || [], 
+    bookings: bookings || [], 
     loading, 
     error, 
     refetch: refresh,
-    fetchClasses: fetchData,
-    updateClasses: updateCachedData,
-    clearClassesCache: clearCache,
+    fetchBookings: fetchData,
+    updateBookings: updateCachedData,
+    clearBookingsCache: clearCache,
     isStale,
     isCached
   };
 };
+
+export default useCachedBookings;

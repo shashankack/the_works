@@ -37,17 +37,17 @@ trainerRoutes.get("/:id", async (c) => {
 });
 
 // ✅ Protect all admin routes after this point
-trainerRoutes.use("*", authMiddleware("admin"));
+trainerRoutes.use("/admin/*", authMiddleware("admin"));
 
-// ✅ Admin — GET all trainers
-trainerRoutes.get("admin/", async (c) => {
+// ✅ Admin — GET all trainers (returns complete data including phone/email)
+trainerRoutes.get("/admin/", async (c) => {
   const db = getDB(c.env);
   const all = await db.select().from(trainers);
   return c.json(all);
 });
 
 // ✅ Admin — POST new trainer
-trainerRoutes.post("/", validate(trainerSchema), async (c) => {
+trainerRoutes.post("/admin/", validate(trainerSchema), async (c) => {
   const db = getDB(c.env);
   const body = c.get("validatedBody");
 
@@ -67,7 +67,7 @@ trainerRoutes.post("/", validate(trainerSchema), async (c) => {
 });
 
 // ✅ Admin — PUT update trainer
-trainerRoutes.put("/:id", validate(trainerSchema), async (c) => {
+trainerRoutes.put("/admin/:id", validate(trainerSchema), async (c) => {
   const db = getDB(c.env);
   const id = c.req.param("id");
   const body = c.get("validatedBody");
@@ -88,7 +88,7 @@ trainerRoutes.put("/:id", validate(trainerSchema), async (c) => {
 });
 
 // ✅ Admin — DELETE trainer
-trainerRoutes.delete("/:id", async (c) => {
+trainerRoutes.delete("/admin/:id", async (c) => {
   const db = getDB(c.env);
   const id = c.req.param("id");
 

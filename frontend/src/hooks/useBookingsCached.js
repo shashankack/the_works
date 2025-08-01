@@ -82,57 +82,74 @@ const useBookings = (options = {}) => {
       setActionLoading(false);
     }
   };
-    try {
-      const res = await fetch(`${API_URL}/${id}/confirm`, {
-        method: "PUT",
-        headers: {
-          // "Authorization": `Bearer ${token}`
-        },
-      });
-      if (!res.ok) throw new Error("Failed to confirm booking");
-      setError(null);
-      return true;
-    } catch (e) {
-      setError(e.message || "Unknown error");
-      throw e;
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Cancel a booking (admin only)
   const cancelBooking = async (id) => {
-    setLoading(true);
+    setActionLoading(true);
+    setActionError(null);
     try {
-      const res = await fetch(`${API_URL}/${id}/cancel`, {
-        method: "PUT",
-        headers: {
-          // "Authorization": `Bearer ${token}`
-        },
-      });
-      if (!res.ok) throw new Error("Failed to cancel booking");
-      setError(null);
-      return true;
-    } catch (e) {
-      setError(e.message || "Unknown error");
-      throw e;
+      const response = await axiosInstance.patch(`/bookings/${id}/cancel`);
+      
+      // Update cache with cancelled booking
+      const currentBookings = bookings || [];
+      const updatedBookings = currentBookings.map(booking =>
+        booking.id === id ? { ...booking, status: 'cancelled' } : booking
+      );
+      updateCachedData(updatedBookings);
+      
+      return response.data;
+    } catch (error) {
+      setActionError(error.message || "Failed to cancel booking");
+      throw error;
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchMyBookings();
-  }, []);
+  // Delete a booking (admin only)
+  const deleteBooking = async (id) => {
+    setActionLoading(true);
+    setActionError(null);
+    try {
+      await axiosInstance.delete(`/bookings/${id}`);
+      
+      // Remove from cache
+      const currentBookings = bookings || [];
+      const filteredBookings = currentBookings.filter(booking => booking.id !== id);
+      updateCachedData(filteredBookings);
+      
+      return true;
+    } catch (error) {
+      setActionError(error.message || "Failed to delete booking");
+      throw error;
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   return {
-    bookings,
-    loading,
-    error,
-    fetchMyBookings,
+    bookings: bookings || [],
+    loading: loading || actionLoading,
+    error: error || actionError,
+    fetchBookings: fetchData,
+    refetch: refresh,
+    updateBookings: updateCachedData,
+    clearBookingsCache: clearCache,
+    isStale,
+    isCached,
+    
+    // Actions
     createBooking,
     confirmBooking,
     cancelBooking,
+    deleteBooking,
+    
+    // Legacy support
+    fetchMyBookings: fetchData,
+    
+    // Action state
+    actionLoading,
+    actionError
   };
 };
 

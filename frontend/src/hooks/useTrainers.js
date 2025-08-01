@@ -17,6 +17,17 @@ const useTrainers = () => {
     }
   };
 
+  const fetchTrainersForAdmin = async () => {
+    try {
+      const res = await axiosInstance.get("/trainers/admin/");
+      setTrainers(res.data);
+    } catch (error) {
+      setError("Failed to fetch trainers");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchTrainerById = async (id) => {
     try {
       const res = await axiosInstance.get(`/trainers/${id}`);
@@ -28,8 +39,8 @@ const useTrainers = () => {
 
   const addTrainer = async (trainer) => {
     try {
-      const res = await axiosInstance.post("/trainers", trainer);
-      setTrainers((prev) => [...prev, res.data]);
+      const res = await axiosInstance.post("/trainers/admin/", trainer);
+      setTrainers((prev) => [...prev, res.data.trainer]);
       return res.data;
     } catch (error) {
       setError("Failed to add trainer");
@@ -39,10 +50,9 @@ const useTrainers = () => {
 
   const updateTrainer = async (id, updates) => {
     try {
-      const res = await axiosInstance.put(`/trainers/${id}`, updates);
-      setTrainers((prev) =>
-        prev.map((trainer) => (trainer.id === id ? res.data : trainer))
-      );
+      const res = await axiosInstance.put(`/trainers/admin/${id}`, updates);
+      // Fetch fresh data since the response might not include the updated trainer
+      await fetchTrainersForAdmin();
       return res.data;
     } catch (error) {
       setError("Failed to update trainer");
@@ -52,7 +62,7 @@ const useTrainers = () => {
 
   const deactivateTrainer = async (id) => {
     try {
-      await axiosInstance.delete(`/trainers/${id}`);
+      await axiosInstance.delete(`/trainers/admin/${id}`);
       setTrainers((prev) => prev.filter((trainer) => trainer.id !== id));
     } catch (error) {
       setError("Failed to deactivate trainer");
@@ -61,7 +71,7 @@ const useTrainers = () => {
   };
 
   useEffect(() => {
-    fetchTrainers();
+    fetchTrainersForAdmin();
   }, []);
 
   return {
@@ -73,6 +83,7 @@ const useTrainers = () => {
     addTrainer,
     updateTrainer,
     deactivateTrainer,
+    fetchTrainersForAdmin,
   };
 };
 

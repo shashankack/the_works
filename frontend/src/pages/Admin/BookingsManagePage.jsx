@@ -41,12 +41,27 @@ import { useUsers } from "../../hooks/useUsers";
 import { useClasses } from "../../hooks/useClasses";
 import useClassPacks from "../../hooks/useClassPacks";
 import { useEvents } from "../../hooks/useEvents";
+import useBookings from "../../hooks/useBookingsCached";
 
 const BookingsManagePage = () => {
   const theme = useTheme();
-  const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  
+  // Use cached bookings with admin mode
+  const {
+    bookings,
+    loading,
+    error,
+    refetch: refetchBookings,
+    confirmBooking,
+    cancelBooking,
+    deleteBooking,
+    isStale,
+    isCached
+  } = useBookings({ 
+    adminMode: true,
+    ttl: 2 * 60 * 1000 // 2 minutes cache
+  });
+  
   const [selectedTab, setSelectedTab] = useState(0);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -88,33 +103,7 @@ const BookingsManagePage = () => {
     });
   }, [bookings]); // Only depend on bookings, not users or fetchUser
 
-  // Fetch all bookings (admin only)
-  const fetchBookings = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const token = getToken("accessToken");
-      const response = await axiosInstance.get("/bookings", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      setBookings(response.data);
-    } catch (err) {
-      console.error("Error fetching bookings:", err);
-      setError(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchBookings();
-  }, []);
-
-  // Filter bookings by status
+  // Filter bookings by status (using cached data)
   const pendingBookings = bookings.filter(
     (booking) => booking.status === "pending"
   );

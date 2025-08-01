@@ -43,3 +43,5 @@ export const useClasses = (options = {}) => {
     isCached
   };
 };
+
+export default useClasses;

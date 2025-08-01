@@ -18,12 +18,18 @@ import {
   DialogContent,
   DialogActions,
   Alert,
+  Paper,
+  Container,
+  Avatar,
 } from "@mui/material";
 
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import EventIcon from "@mui/icons-material/Event";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
+import ScheduleIcon from "@mui/icons-material/Schedule";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 
 import { useClasses } from "../../hooks/useClasses";
 import { useEvents } from "../../hooks/useEvents";
@@ -41,17 +47,107 @@ import LoadingScreen from "../../components/Loader";
 import axiosInstance from "../../api/axiosInstance";
 
 const StatusTabs = ({ value, onChange, counts }) => (
-  <Tabs
-    value={value}
-    onChange={(e, newValue) => onChange(newValue)}
-    textColor="primary"
-    indicatorColor="primary"
-    sx={{ mb: 3 }}
+  <Paper
+    sx={{
+      backgroundColor: "white",
+      borderRadius: 3,
+      p: 1,
+      mb: 4,
+      boxShadow: "0 4px 20px rgba(78, 41, 22, 0.08)",
+      border: "1px solid rgba(177, 83, 36, 0.1)",
+    }}
   >
-    <Tab value="upcoming" label={`Upcoming (${counts.upcoming || 0})`} />
-    <Tab value="ongoing" label={`Ongoing (${counts.ongoing || 0})`} />
-    <Tab value="completed" label={`Completed (${counts.completed || 0})`} />
-  </Tabs>
+    <Tabs
+      value={value}
+      onChange={(e, newValue) => onChange(newValue)}
+      sx={{
+        "& .MuiTabs-indicator": {
+          backgroundColor: "primary.main",
+          height: 3,
+          borderRadius: "3px 3px 0 0",
+        },
+        "& .MuiTab-root": {
+          textTransform: "none",
+          fontFamily: "Average Sans, sans-serif",
+          fontWeight: 500,
+          fontSize: "16px",
+          color: "text.primary",
+          minHeight: 48,
+          borderRadius: 2,
+          mr: 1,
+          transition: "all 0.3s ease",
+          "&:hover": {
+            backgroundColor: "rgba(177, 83, 36, 0.05)",
+          },
+          "&.Mui-selected": {
+            color: "primary.main",
+            fontWeight: 600,
+          },
+        },
+      }}
+    >
+      <Tab
+        value="upcoming"
+        label={
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <ScheduleIcon fontSize="small" />
+            <span>Upcoming</span>
+            <Chip
+              label={counts.upcoming || 0}
+              size="small"
+              sx={{
+                backgroundColor: "#2196f3",
+                color: "white",
+                height: 20,
+                fontSize: "0.75rem",
+                fontWeight: "bold",
+              }}
+            />
+          </Box>
+        }
+      />
+      <Tab
+        value="ongoing"
+        label={
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <FitnessCenterIcon fontSize="small" />
+            <span>Ongoing</span>
+            <Chip
+              label={counts.ongoing || 0}
+              size="small"
+              sx={{
+                backgroundColor: "#4caf50",
+                color: "white",
+                height: 20,
+                fontSize: "0.75rem",
+                fontWeight: "bold",
+              }}
+            />
+          </Box>
+        }
+      />
+      <Tab
+        value="completed"
+        label={
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <LocalOfferIcon fontSize="small" />
+            <span>Completed</span>
+            <Chip
+              label={counts.completed || 0}
+              size="small"
+              sx={{
+                backgroundColor: "secondary.main",
+                color: "text.white",
+                height: 20,
+                fontSize: "0.75rem",
+                fontWeight: "bold",
+              }}
+            />
+          </Box>
+        }
+      />
+    </Tabs>
+  </Paper>
 );
 
 const ItemCard = ({
@@ -67,6 +163,19 @@ const ItemCard = ({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState("");
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "upcoming":
+        return "#2196f3";
+      case "ongoing":
+        return "#4caf50";
+      case "completed":
+        return "#78909c";
+      default:
+        return "#78909c";
+    }
+  };
+
   const handleDelete = async () => {
     try {
       await axiosInstance.delete(
@@ -77,93 +186,211 @@ const ItemCard = ({
       onDelete?.();
       setConfirmOpen(false);
     } catch (err) {
-      setError("Failed to delete class. Please try again.");
+      setError("Failed to delete. Please try again.");
     }
   };
 
   return (
     <Card
       sx={{
-        cursor: "pointer",
         borderRadius: 3,
         overflow: "hidden",
         height: "100%",
-        boxShadow: "0 2px 16px 0 rgba(24,40,74,0.06)",
-        border: "1px solid #f2f3f5",
-        backgroundColor: "#fff",
-        transition: "box-shadow 0.25s, transform 0.25s",
+        backgroundColor: "white",
+        border: "2px solid transparent",
+        boxShadow: "0 4px 20px rgba(78, 41, 22, 0.08)",
+        transition: "all 0.3s ease",
         "&:hover": {
-          boxShadow: "0 8px 32px 0 rgba(24,40,74,0.10)",
-          transform: "translateY(-4px) scale(1.025)",
-          borderColor: "primary.light",
+          borderColor: "primary.main",
+          boxShadow: "0 8px 30px rgba(177, 83, 36, 0.15)",
+          transform: "translateY(-4px)",
         },
       }}
     >
-      <CardMedia
-        component="img"
-        height="160"
-        image={item.thumbnail}
-        alt={item.title}
-      />
-
-      <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="subtitle2" fontWeight="bold">
-            {item.title}
-          </Typography>
-          {status && (
-            <Chip
-              label={status}
-              size="small"
-              color={
-                status === "upcoming"
-                  ? "info"
-                  : status === "ongoing"
-                  ? "success"
-                  : "default"
-              }
-            />
+      <Box sx={{ position: "relative" }}>
+        <CardMedia
+          component="img"
+          height="180"
+          image={item.thumbnail}
+          alt={item.title || item.name}
+          sx={{
+            objectFit: "cover",
+          }}
+        />
+        {status && (
+          <Chip
+            label={status.charAt(0).toUpperCase() + status.slice(1)}
+            size="small"
+            sx={{
+              position: "absolute",
+              top: 12,
+              right: 12,
+              backgroundColor: getStatusColor(status),
+              color: "white",
+              fontWeight: "bold",
+              fontSize: "0.75rem",
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+            }}
+          />
+        )}
+        <Box
+          sx={{
+            position: "absolute",
+            top: 12,
+            left: 12,
+            backgroundColor: "rgba(78, 41, 22, 0.8)",
+            borderRadius: "50%",
+            p: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {isClass ? (
+            <FitnessCenterIcon sx={{ color: "text.white", fontSize: 20 }} />
+          ) : (
+            <EventIcon sx={{ color: "text.white", fontSize: 20 }} />
           )}
         </Box>
+      </Box>
 
-        {classPacks.length > 0 && (
-          <Box mt={1}>
-            <Typography variant="body1" color="text.secondary">
-              Packs
-            </Typography>
-            <Grid container spacing={1} mt={0.5}>
-              {classPacks.map((pack) => (
-                <Grid size={6} key={pack.id}>
-                  <Chip
-                    key={pack.id}
-                    label={`${pack.title} (${pack.classType})`}
-                    size="small"
-                  />
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
+      <CardContent sx={{ p: 3 }}>
+        <Typography
+          variant="h6"
+          fontWeight="bold"
+          sx={{
+            mb: 1.5,
+            color: "text.primary",
+            fontSize: "18px",
+            fontFamily: "Hind Siliguri, sans-serif",
+            lineHeight: 1.3,
+          }}
+        >
+          {item.title || item.name}
+        </Typography>
+
+        {item.description && (
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            component="div"
+            sx={{
+              mb: 2,
+              fontSize: "14px",
+              lineHeight: 1.4,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              "& p": {
+                margin: 0,
+              },
+              "& br": {
+                display: "none",
+              },
+              "& *": {
+                fontSize: "inherit !important",
+                lineHeight: "inherit !important",
+              },
+            }}
+            dangerouslySetInnerHTML={{ __html: item.description }}
+          />
         )}
 
-        {classSchedules.length > 0 && (
-          <Box mt={1}>
-            <Typography variant="body1" color="text.secondary">
-              Schedules
+        {classPacks.length > 0 && (
+          <Box sx={{ mb: 2 }}>
+            <Typography
+              variant="body2"
+              fontWeight="medium"
+              sx={{
+                mb: 1,
+                color: "primary.main",
+                fontSize: "13px",
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+              }}
+            >
+              Class Packs
             </Typography>
-            <Stack direction="row" flexWrap="wrap" spacing={1} mt={0.5}>
-              {classSchedules.map((s) => (
+            <Stack direction="row" flexWrap="wrap" spacing={0.5}>
+              {classPacks.slice(0, 2).map((pack) => (
                 <Chip
-                  key={s.id}
-                  label={`${days[s.dayOfWeek]} ${s.startTime}–${s.endTime}`}
+                  key={pack.id}
+                  label={pack.title || pack.name}
                   size="small"
-                  color="default"
+                  sx={{
+                    backgroundColor: "rgba(177, 83, 36, 0.1)",
+                    color: "primary.main",
+                    fontSize: "0.75rem",
+                    height: 24,
+                  }}
                 />
               ))}
+              {classPacks.length > 2 && (
+                <Chip
+                  label={`+${classPacks.length - 2} more`}
+                  size="small"
+                  sx={{
+                    backgroundColor: "rgba(177, 83, 36, 0.1)",
+                    color: "primary.main",
+                    fontSize: "0.75rem",
+                    height: 24,
+                  }}
+                />
+              )}
             </Stack>
           </Box>
         )}
 
-        <Box mt={2} display="flex" justifyContent="flex-end" gap={1}>
+        {classSchedules.length > 0 && (
+          <Box sx={{ mb: 2 }}>
+            <Typography
+              variant="body2"
+              fontWeight="medium"
+              sx={{
+                mb: 1,
+                color: "secondary.main",
+                fontSize: "13px",
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+              }}
+            >
+              Schedules
+            </Typography>
+            <Stack direction="row" flexWrap="wrap" spacing={0.5}>
+              {classSchedules.slice(0, 2).map((schedule) => (
+                <Chip
+                  key={schedule.id}
+                  label={`${days[schedule.dayOfWeek]} ${schedule.startTime}–${
+                    schedule.endTime
+                  }`}
+                  size="small"
+                  sx={{
+                    backgroundColor: "rgba(78, 41, 22, 0.1)",
+                    color: "secondary.main",
+                    fontSize: "0.75rem",
+                    height: 24,
+                  }}
+                />
+              ))}
+              {classSchedules.length > 2 && (
+                <Chip
+                  label={`+${classSchedules.length - 2} more`}
+                  size="small"
+                  sx={{
+                    backgroundColor: "rgba(78, 41, 22, 0.1)",
+                    color: "secondary.main",
+                    fontSize: "0.75rem",
+                    height: 24,
+                  }}
+                />
+              )}
+            </Stack>
+          </Box>
+        )}
+
+        <Stack direction="row" spacing={1} sx={{ mt: 3 }}>
           {isClass && (
             <Button
               size="small"
@@ -173,41 +400,106 @@ const ItemCard = ({
                 e.stopPropagation();
                 onEdit(item);
               }}
+              sx={{
+                flex: 1,
+                textTransform: "none",
+                fontFamily: "Average Sans, sans-serif",
+                fontWeight: 500,
+                borderColor: "primary.main",
+                color: "primary.main",
+                borderRadius: 2,
+                "&:hover": {
+                  backgroundColor: "rgba(177, 83, 36, 0.05)",
+                  borderColor: "primary.main",
+                },
+              }}
             >
               Edit
             </Button>
           )}
           <Button
             size="small"
-            color="error"
             variant="outlined"
+            color="error"
             startIcon={<DeleteIcon />}
             onClick={(e) => {
               e.stopPropagation();
               setConfirmOpen(true);
             }}
+            sx={{
+              flex: isClass ? 1 : "auto",
+              textTransform: "none",
+              fontFamily: "Average Sans, sans-serif",
+              fontWeight: 500,
+              borderRadius: 2,
+            }}
           >
             Delete
           </Button>
-        </Box>
+        </Stack>
       </CardContent>
 
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
-        <DialogTitle>Confirm Deletion</DialogTitle>
-        <DialogContent>
-          <Typography>
+      <Dialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            backgroundColor: "background.default",
+            color: "text.primary",
+            fontFamily: "Hind Siliguri, sans-serif",
+            fontWeight: "bold",
+          }}
+        >
+          Confirm Deletion
+        </DialogTitle>
+        <DialogContent sx={{ backgroundColor: "background.default", pt: 2 }}>
+          <Typography sx={{ fontFamily: "Average Sans, sans-serif" }}>
             Are you sure you want to permanently delete this{" "}
             {item.id.startsWith("event_") ? "event" : "class"}?
           </Typography>
           {error && (
-            <Alert severity="error" sx={{ mt: 2 }}>
+            <Alert
+              severity="error"
+              sx={{
+                mt: 2,
+                borderRadius: 2,
+                backgroundColor: "rgba(244, 67, 54, 0.05)",
+                border: "1px solid rgba(244, 67, 54, 0.2)",
+              }}
+            >
               {error}
             </Alert>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmOpen(false)}>Cancel</Button>
-          <Button onClick={handleDelete} variant="contained" color="error">
+        <DialogActions sx={{ backgroundColor: "background.default", p: 3 }}>
+          <Button
+            onClick={() => setConfirmOpen(false)}
+            sx={{
+              textTransform: "none",
+              fontFamily: "Average Sans, sans-serif",
+              color: "text.primary",
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDelete}
+            variant="contained"
+            color="error"
+            sx={{
+              textTransform: "none",
+              fontFamily: "Average Sans, sans-serif",
+              fontWeight: 600,
+              borderRadius: 2,
+            }}
+          >
             Delete
           </Button>
         </DialogActions>
@@ -257,44 +549,159 @@ const Section = ({
   const filtered = itemsWithStatus.filter((item) => item.status === tab);
 
   return (
-    <Box mb={10} maxWidth="lg" mx="auto">
+    <Paper
+      elevation={0}
+      sx={{
+        mb: 6,
+        p: 4,
+        borderRadius: 4,
+        backgroundColor: "background.default",
+        border: "2px solid rgba(177, 83, 36, 0.1)",
+      }}
+    >
+      {/* Section Header */}
       <Box
-        display="flex"
-        alignItems="center"
-        justifyContent="space-between"
-        mb={1}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 3,
+          pb: 2,
+          borderBottom: "2px solid",
+          borderBottomColor:
+            title === "Classes" ? "primary.main" : "secondary.main",
+        }}
       >
-        <Typography
-          variant="h5"
-          fontWeight="bold"
-          sx={{ letterSpacing: 0.2, color: "primary.main" }}
-        >
-          {title}
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Avatar
+            sx={{
+              width: 48,
+              height: 48,
+              backgroundColor:
+                title === "Classes" ? "primary.main" : "secondary.main",
+              mr: 2,
+            }}
+          >
+            {title === "Classes" ? (
+              <FitnessCenterIcon sx={{ color: "text.white" }} />
+            ) : (
+              <EventIcon sx={{ color: "text.white" }} />
+            )}
+          </Avatar>
+          <Box>
+            <Typography
+              variant="h1"
+              sx={{
+                fontWeight: "bold",
+                color: title === "Classes" ? "primary.main" : "secondary.main",
+                fontSize: "28px",
+                fontFamily: "Hind Siliguri, sans-serif",
+              }}
+            >
+              {title}
+            </Typography>
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{
+                fontSize: "16px",
+                fontFamily: "Average Sans, sans-serif",
+              }}
+            >
+              Manage your {title.toLowerCase()} and their schedules
+            </Typography>
+          </Box>
+        </Box>
+
         {onCreate && (
           <Button
             variant="contained"
-            startIcon={
-              title === "Classes" ? <FitnessCenterIcon /> : <EventIcon />
-            }
+            startIcon={<AddIcon />}
             onClick={onCreate}
+            sx={{
+              backgroundColor:
+                title === "Classes" ? "primary.main" : "secondary.main",
+              color: "text.white",
+              textTransform: "none",
+              fontFamily: "Average Sans, sans-serif",
+              fontWeight: 600,
+              fontSize: "16px",
+              px: 3,
+              py: 1.5,
+              borderRadius: 3,
+              boxShadow:
+                title === "Classes"
+                  ? "0 4px 20px rgba(177, 83, 36, 0.3)"
+                  : "0 4px 20px rgba(78, 41, 22, 0.3)",
+              "&:hover": {
+                backgroundColor: title === "Classes" ? "#9d4a20" : "#3d1f11",
+                transform: "translateY(-2px)",
+                boxShadow:
+                  title === "Classes"
+                    ? "0 8px 30px rgba(177, 83, 36, 0.4)"
+                    : "0 8px 30px rgba(78, 41, 22, 0.4)",
+              },
+            }}
           >
             {createLabel}
           </Button>
         )}
       </Box>
-      <StatusTabs
-        value={tab}
-        onChange={setTab}
-        counts={counts}
-        sx={{ mb: 4 }}
-      />
+
+      {/* Status Tabs */}
+      <StatusTabs value={tab} onChange={setTab} counts={counts} />
+
+      {/* Content Grid */}
       <Grid container spacing={3}>
         {filtered.length === 0 ? (
           <Grid size={12}>
-            <Typography>
-              No {tab} {title.toLowerCase()} found.
-            </Typography>
+            <Paper
+              sx={{
+                p: 6,
+                textAlign: "center",
+                borderRadius: 3,
+                backgroundColor: "white",
+                border: "2px dashed rgba(177, 83, 36, 0.2)",
+              }}
+            >
+              <Avatar
+                sx={{
+                  width: 64,
+                  height: 64,
+                  backgroundColor: "rgba(177, 83, 36, 0.1)",
+                  color: "primary.main",
+                  mx: "auto",
+                  mb: 2,
+                }}
+              >
+                {title === "Classes" ? (
+                  <FitnessCenterIcon sx={{ fontSize: 32 }} />
+                ) : (
+                  <EventIcon sx={{ fontSize: 32 }} />
+                )}
+              </Avatar>
+              <Typography
+                variant="h6"
+                sx={{
+                  color: "text.primary",
+                  fontFamily: "Hind Siliguri, sans-serif",
+                  fontWeight: "bold",
+                  mb: 1,
+                }}
+              >
+                No {tab} {title.toLowerCase()} found
+              </Typography>
+              <Typography
+                variant="body1"
+                color="text.secondary"
+                sx={{
+                  fontFamily: "Average Sans, sans-serif",
+                }}
+              >
+                Create your first {title.toLowerCase().slice(0, -1)} to get
+                started
+              </Typography>
+            </Paper>
           </Grid>
         ) : (
           filtered.map((item) => {
@@ -335,7 +742,7 @@ const Section = ({
                   onEdit={
                     title.toLowerCase().includes("class") ? onEdit : undefined
                   }
-                  onDelete={onDelete} // Always pass!
+                  onDelete={onDelete}
                   classPacks={classPacks}
                   classSchedules={classSchedules}
                 />
@@ -344,7 +751,7 @@ const Section = ({
           })
         )}
       </Grid>
-    </Box>
+    </Paper>
   );
 };
 
@@ -381,38 +788,80 @@ const Dashboard = () => {
   }
 
   return (
-    <Box p={isMobile ? 2 : 4} mt={8} overflow="hidden">
-      <Section
-        title="Classes"
-        items={classes}
-        tab={classTab}
-        setTab={setClassTab}
-        onEdit={(classItem) => {
-          setEditClass(classItem);
-          setEditOpen(true);
-        }}
-        packs={packs}
-        schedules={schedules}
-        onDelete={refetchClasses}
-        onCreate={() => {
-          setCreateType("class");
-          setCreateOpen(true);
-        }}
-        createLabel="Create Class"
-      />
-      <Section
-        title="Events"
-        items={events}
-        tab={eventTab}
-        setTab={setEventTab}
-        onDelete={refetchEvents} // ADD THIS FOR REFRESH ON EVENT DELETE!
-        onCreate={() => {
-          setCreateType("event");
-          setCreateOpen(true);
-        }}
-        createLabel="Create Event"
-      />
+    <Box
+      sx={{
+        backgroundColor: "background.default",
+        minHeight: "100vh",
+        pt: 10,
+        pb: 4,
+      }}
+    >
+      <Container maxWidth="xl">
+        {/* Dashboard Header */}
+        <Box sx={{ mb: 6, textAlign: "center" }}>
+          <Typography
+            variant="h1"
+            component="h1"
+            sx={{
+              fontWeight: "bold",
+              color: "secondary.main",
+              fontSize: "36px",
+              fontFamily: "Hind Siliguri, sans-serif",
+              mb: 2,
+            }}
+          >
+            Admin Dashboard
+          </Typography>
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            sx={{
+              fontSize: "18px",
+              fontFamily: "Average Sans, sans-serif",
+              maxWidth: "600px",
+              mx: "auto",
+            }}
+          >
+            Manage your fitness classes and events from one central location
+          </Typography>
+        </Box>
 
+        {/* Classes Section */}
+        <Section
+          title="Classes"
+          items={classes}
+          tab={classTab}
+          setTab={setClassTab}
+          onEdit={(classItem) => {
+            setEditClass(classItem);
+            setEditOpen(true);
+          }}
+          packs={packs}
+          schedules={schedules}
+          onDelete={refetchClasses}
+          onCreate={() => {
+            setCreateType("class");
+            setCreateOpen(true);
+          }}
+          createLabel="Create New Class"
+        />
+
+        {/* Events Section */}
+        <Section
+          title="Events"
+          items={events}
+          tab={eventTab}
+          setTab={setEventTab}
+          onDelete={refetchEvents}
+          onCreate={() => {
+            setCreateType("event");
+            setCreateOpen(true);
+          }}
+          createLabel="Create New Event"
+        />
+      </Container>
+
+      {/* Modals */}
       <DetailsModal
         open={!!selectedItem}
         onClose={() => setSelectedItem(null)}

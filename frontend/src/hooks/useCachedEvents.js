@@ -1,7 +1,7 @@
 import { useCachedApi } from "./useCachedApi";
-import { getAllClasses } from "../api/classService";
+import axiosInstance from "../api/axiosInstance";
 
-export const useClasses = (options = {}) => {
+export const useCachedEvents = (options = {}) => {
   const {
     ttl = 5 * 60 * 1000, // 5 minutes default cache
     immediate = true,
@@ -9,7 +9,7 @@ export const useClasses = (options = {}) => {
   } = options;
 
   const {
-    data: classes,
+    data: events,
     loading,
     error,
     fetchData,
@@ -19,9 +19,9 @@ export const useClasses = (options = {}) => {
     isStale,
     isCached
   } = useCachedApi(
-    'classes',
+    'events',
     async () => {
-      const response = await getAllClasses();
+      const response = await axiosInstance.get('/events');
       return response.data;
     },
     {
@@ -32,14 +32,16 @@ export const useClasses = (options = {}) => {
   );
 
   return { 
-    classes: classes || [], 
+    events: events || [], 
     loading, 
     error, 
     refetch: refresh,
-    fetchClasses: fetchData,
-    updateClasses: updateCachedData,
-    clearClassesCache: clearCache,
+    fetchEvents: fetchData,
+    updateEvents: updateCachedData,
+    clearEventsCache: clearCache,
     isStale,
     isCached
   };
 };
+
+export default useCachedEvents;
