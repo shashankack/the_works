@@ -10,45 +10,53 @@ const Home = () => {
 
   useEffect(() => {
     // Check if user just logged in and had a pending registration
-    const pendingRegistration = sessionStorage.getItem('pendingRegistration');
+    const pendingRegistration = sessionStorage.getItem("pendingRegistration");
     if (pendingRegistration) {
       try {
         const activity = JSON.parse(pendingRegistration);
         // Clear the pending registration
-        sessionStorage.removeItem('pendingRegistration');
-        
+        sessionStorage.removeItem("pendingRegistration");
+
         // Scroll to activities section and trigger registration
         if (activitiesSectionRef.current) {
-          activitiesSectionRef.current.scrollIntoView({ 
-            behavior: 'smooth' 
+          activitiesSectionRef.current.scrollIntoView({
+            behavior: "smooth",
           });
-          
+
           // Small delay to ensure scroll is complete, then trigger registration
           setTimeout(() => {
             // Trigger the registration for this activity
             // This would need to be implemented in ActivitesSection
-            const event = new CustomEvent('triggerRegistration', { 
-              detail: activity 
+            const event = new CustomEvent("triggerRegistration", {
+              detail: activity,
             });
             window.dispatchEvent(event);
           }, 1000);
         }
       } catch (error) {
         console.error("Failed to parse pending registration:", error);
-        sessionStorage.removeItem('pendingRegistration');
+        sessionStorage.removeItem("pendingRegistration");
       }
     }
   }, []);
 
   return (
     <>
-      <HeroSection />
-      <AboutSection />
-      <div ref={activitiesSectionRef}>
+      <div id="hero-section">
+        <HeroSection />
+      </div>
+      <div id="about-section">
+        <AboutSection />
+      </div>
+      <div id="activities-section" ref={activitiesSectionRef}>
         <ActivitesSection />
       </div>
-      <TeamSection />
-      <ContactSection />
+      <div id="team-section">
+        <TeamSection />
+      </div>
+      <div id="contact-section">
+        <ContactSection />
+      </div>
     </>
   );
 };

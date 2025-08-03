@@ -71,7 +71,7 @@ const useTrainers = () => {
   };
 
   useEffect(() => {
-    fetchTrainersForAdmin();
+    fetchTrainers(); // Use public endpoint by default
   }, []);
 
   return {

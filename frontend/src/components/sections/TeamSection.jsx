@@ -13,6 +13,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 
 import useTrainers from "../../hooks/useTrainers";
+import { useCachedTrainers } from "../../hooks/useCachedTrainers";
 import trainersBg from "../../assets/images/teams_bg.png";
 
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
@@ -26,7 +27,8 @@ const TeamSection = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [animating, setAnimating] = useState(false);
 
-  const { trainers, loading, error } = useTrainers();
+  // Use cached trainers hook with public data (adminMode: false)
+  const { trainers, loading, error } = useCachedTrainers({ adminMode: false });
 
   const prevBtnRef = useRef(null);
   const nextBtnRef = useRef(null);

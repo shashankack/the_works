@@ -62,5 +62,5 @@ export const removeUser = () => localStorage.removeItem("user");
 export const logout = () => {
   removeToken();
   removeUser();
-  window.location.href = "/login";
+  window.location.href = "/";
 };

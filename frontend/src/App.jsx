@@ -26,6 +26,7 @@ import Dashboard from "./pages/Admin/Dashboard";
 import ActivitesManagePage from "./pages/Admin/ActivitesManagePage";
 import TrainersManagePage from "./pages/Admin/TrainersManagePage";
 import BookingsManagePage from "./pages/Admin/BookingsManagePage";
+import EnquiriesManagePage from "./pages/Admin/EnquiriesManagePage";
 
 const App = () => {
   return (
@@ -51,7 +52,7 @@ const App = () => {
               <Route path="/admin/bookings" element={<BookingsManagePage />} />
               <Route
                 path="/admin/enquiries"
-                element={<div>Manage Enquiries</div>}
+                element={<EnquiriesManagePage />}
               />
             </Route>
 

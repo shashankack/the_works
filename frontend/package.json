@@ -29,6 +29,7 @@
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.60.0",
     "react-router-dom": "^7.6.3",
+    "split-type": "^0.3.4",
     "swiper": "^11.2.10",
     "zod": "^4.0.5"
   },

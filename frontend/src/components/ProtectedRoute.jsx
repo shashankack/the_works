@@ -1,11 +1,11 @@
 import { Navigate } from "react-router-dom";
 import { isAuthenticated, hasRole } from "../utils/auth";
 
-const ProtectedRoute = ({ 
-  children, 
-  requiredRole = null, 
+const ProtectedRoute = ({
+  children,
+  requiredRole = null,
   redirectTo = "/login",
-  adminRedirectTo = "/admin/login" 
+  adminRedirectTo = "/admin/login",
 }) => {
   // Check if user is authenticated
   if (!isAuthenticated()) {

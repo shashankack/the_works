@@ -27,7 +27,6 @@ import "swiper/css";
 // Import Register Form
 import RegisterForm from "../forms/RegisterForm";
 import useAddons from "../../hooks/useAddons";
-import { isAuthenticated } from "../../utils/auth";
 
 const SwiperSection = ({ data, onRegisterClick }) => {
   const theme = useTheme();
@@ -131,26 +130,6 @@ const ActivitesSection = () => {
   const [registerOpen, setRegisterOpen] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState(null);
 
-  // Listen for pending registration trigger
-  useEffect(() => {
-    const handleTriggerRegistration = (event) => {
-      const activity = event.detail;
-      if (activity && isAuthenticated()) {
-        setSelectedActivity(activity);
-        setRegisterOpen(true);
-      }
-    };
-
-    window.addEventListener("triggerRegistration", handleTriggerRegistration);
-
-    return () => {
-      window.removeEventListener(
-        "triggerRegistration",
-        handleTriggerRegistration
-      );
-    };
-  }, []);
-
   useEffect(() => {
     // console.log("Classes:", classes);
     // console.log("Classes Loading:", classesLoading);
@@ -170,16 +149,7 @@ const ActivitesSection = () => {
 
   // Handler for register button click
   const handleRegisterClick = (activity) => {
-    // Check if user is authenticated
-    if (!isAuthenticated()) {
-      // Store the selected activity in sessionStorage for after login
-      sessionStorage.setItem("pendingRegistration", JSON.stringify(activity));
-      // Redirect to auth page
-      navigate("/login");
-      return;
-    }
-
-    // User is authenticated, open registration form
+    // Simply open the register form - it will handle authentication internally
     setSelectedActivity(activity);
     setRegisterOpen(true);
   };

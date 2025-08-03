@@ -4,6 +4,7 @@ import { enquiries } from "@/db/schema";
 import { nanoid } from "nanoid";
 import { authMiddleware } from "@/middleware/auth";
 import { validate, enquirySchema } from "@/middleware/validate";
+import { eq } from "drizzle-orm";
 
 export const enquiryRoutes = new Hono<{ Bindings: Env }>();
 
@@ -34,6 +35,25 @@ enquiryRoutes.post("/", validate(enquirySchema), async (c) => {
   // await resend.emails.send({ to: 'admin@example.com', subject: 'New Enquiry', ... })
 
   return c.json({ success: true });
+});
+
+// ✅ DELETE enquiry (admin only)
+enquiryRoutes.delete("/:id", authMiddleware("admin"), async (c) => {
+  const db = getDB(c.env);
+  const id = c.req.param("id");
+
+  try {
+    const result = await db.delete(enquiries).where(eq(enquiries.id, id));
+    
+    if (result.changes === 0) {
+      return c.json({ error: "Enquiry not found" }, 404);
+    }
+
+    return c.json({ success: true, message: "Enquiry deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting enquiry:", error);
+    return c.json({ error: "Failed to delete enquiry" }, 500);
+  }
 });
 
 export default enquiryRoutes;

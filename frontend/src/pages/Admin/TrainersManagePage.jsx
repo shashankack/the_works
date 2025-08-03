@@ -40,10 +40,10 @@ const TrainersManagePage = () => {
     updateTrainers,
     clearTrainersCache,
     isStale,
-    isCached
-  } = useCachedTrainers({ 
+    isCached,
+  } = useCachedTrainers({
     adminMode: true,
-    ttl: 10 * 60 * 1000 // 10 minutes cache for trainer data
+    ttl: 10 * 60 * 1000, // 10 minutes cache for trainer data
   });
 
   const [open, setOpen] = useState(false);

@@ -23,29 +23,49 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Only handle token refresh for authenticated requests
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
-      !originalRequest.url.includes("/auth/token")
+      !originalRequest.url.includes("/auth/") &&
+      getToken("accessToken") // Only try refresh if we actually have a token
     ) {
       originalRequest._retry = true;
       try {
+        const refreshToken = getToken("refreshToken");
+        
+        if (!refreshToken) {
+          // No refresh token available, clear storage and don't redirect
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          return Promise.reject(error);
+        }
+
         const refreshRes = await axios.post(
           `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
           {
-            refreshToken: getToken("refreshToken"),
+            refreshToken,
           }
         );
 
         const newAccessToken = refreshRes.data.accessToken;
-        setToken(newAccessToken, getToken("refreshToken"));
+        setToken(newAccessToken, refreshToken);
         axiosInstance.defaults.headers.Authorization = `Bearer ${newAccessToken}`;
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
         return axiosInstance(originalRequest);
       } catch (refreshErr) {
+        // Clear tokens
         localStorage.removeItem("token");
-        window.location.href = "/admin/login";
+        localStorage.removeItem("user");
+        
+        // Only redirect if we're in an admin context
+        const currentPath = window.location.pathname;
+        if (currentPath.startsWith('/admin')) {
+          window.location.href = "/admin/login";
+        }
+        // For public routes, don't redirect - let the UI handle it
+        
         return Promise.reject(refreshErr);
       }
     }

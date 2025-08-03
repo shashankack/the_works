@@ -633,34 +633,6 @@ const ActivityInternal = () => {
           <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <Box
               component={activity.location ? "button" : "div"}
-              onClick={
-                activity.location
-                  ? () => {
-                      const embedUrl = activity.location;
-                      let mapsUrl = embedUrl;
-
-                      const coordMatch = embedUrl.match(
-                        /!2d([\d.-]+)!3d([\d.-]+)/
-                      );
-                      const placeMatch = embedUrl.match(/!1s([^!]+)/);
-
-                      if (coordMatch) {
-                        const lng = coordMatch[1];
-                        const lat = coordMatch[2];
-                        mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
-                      } else if (placeMatch) {
-                        const placeId = placeMatch[1];
-                        mapsUrl = `https://www.google.com/maps/place/?q=place_id:${placeId}`;
-                      } else if (placeName) {
-                        mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(
-                          placeName
-                        )}`;
-                      }
-
-                      window.open(mapsUrl, "_blank");
-                    }
-                  : undefined
-              }
               sx={{
                 height: 140,
                 background: "linear-gradient(135deg, #A67E5B 0%, #C49A7B 100%)",

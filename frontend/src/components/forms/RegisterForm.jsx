@@ -19,6 +19,8 @@ import {
   FormGroup,
   Alert,
   CircularProgress,
+  Tabs,
+  Tab,
 } from "@mui/material";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -29,6 +31,10 @@ import { setToken, setUser, isAuthenticated } from "../../utils/auth";
 
 import useClassPacks from "../../hooks/useClassPacks";
 import useClassSchedules from "../../hooks/useClassSchedules";
+
+// Import auth forms
+import SignInForm from "./SignInForm";
+import SignUpForm from "./SignUpForm";
 
 const dayOfWeekLabels = [
   "Sunday",
@@ -60,11 +66,16 @@ const RegisterForm = ({ addons = [], activity, onClose, onSubmit }) => {
   const [formError, setFormError] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [userLoading, setUserLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authTab, setAuthTab] = useState(0); // 0 for signin, 1 for signup
 
-  // Auto-fill user details if authenticated
+  // Check authentication status and auto-fill user details if authenticated
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (isAuthenticated()) {
+    const checkAuthAndFetchUserData = async () => {
+      const authenticated = isAuthenticated();
+      setIsAuthenticated(authenticated);
+
+      if (authenticated) {
         setUserLoading(true);
         try {
           const userData = await getCurrentUser();
@@ -83,7 +94,7 @@ const RegisterForm = ({ addons = [], activity, onClose, onSubmit }) => {
       }
     };
 
-    fetchUserData();
+    checkAuthAndFetchUserData();
   }, []);
 
   // Handle add-on checkbox toggle
@@ -100,6 +111,34 @@ const RegisterForm = ({ addons = [], activity, onClose, onSubmit }) => {
     setUserDetails({ ...userDetails, [e.target.name]: e.target.value });
   };
 
+  // Handle successful authentication
+  const handleAuthSuccess = async (data) => {
+    try {
+      // Store authentication data
+      setToken(data.accessToken, data.refreshToken);
+      setUser({
+        firstName: data.user.firstName,
+        lastName: data.user.lastName,
+        email: data.user.email,
+        phone: data.user.phone,
+      });
+
+      // Update local state
+      setIsAuthenticated(true);
+      setUserDetails({
+        firstName: data.user.firstName || "",
+        lastName: data.user.lastName || "",
+        email: data.user.email || "",
+        phone: data.user.phone || "",
+      });
+
+      setFormError(null);
+    } catch (err) {
+      console.error("Failed to handle authentication:", err);
+      setFormError("Authentication successful but failed to load user data.");
+    }
+  };
+
   // Validate form and submit registration + booking
   const handleProceedToPayment = async () => {
     setFormError(null);
@@ -111,12 +150,12 @@ const RegisterForm = ({ addons = [], activity, onClose, onSubmit }) => {
 
     // Calculate total price
     const selectedPackData = packs.find((pack) => pack.id === selectedPack);
-    const selectedAddonDetails = selectedAddOns.map(addonId => {
+    const selectedAddonDetails = selectedAddOns.map((addonId) => {
       const addon = addons.find((a) => a.id === addonId);
       return {
         id: addon.id,
         name: addon.name,
-        price: addon.price
+        price: addon.price,
       };
     });
     const addonPrices = selectedAddonDetails.reduce((total, addon) => {
@@ -142,237 +181,312 @@ const RegisterForm = ({ addons = [], activity, onClose, onSubmit }) => {
 
   return (
     <Box>
-      <DialogTitle>Register for {activity?.title}</DialogTitle>
-      <DialogContent
-        sx={{
-          maxHeight: "70vh",
-          overflowY: "auto",
-          "&::-webkit-scrollbar": {
-            width: "8px",
-          },
-          "&::-webkit-scrollbar-track": {
-            background: "#f1f1f1",
-            borderRadius: "4px",
-          },
-          "&::-webkit-scrollbar-thumb": {
-            background: "#c1c1c1",
-            borderRadius: "4px",
-            "&:hover": {
-              background: "#a8a8a8",
-            },
-          },
-        }}
-      >
-        {formError && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {formError}
-          </Alert>
-        )}
-
-        {/* User Detail Inputs in Grid */}
-        <Grid container spacing={2} mb={3}>
-          <Grid
-            size={{
-              xs: 12,
-              sm: 6,
+      {!isAuthenticated ? (
+        // Show authentication forms if user is not authenticated
+        <>
+          <DialogTitle
+            sx={{
+              fontSize: "1rem",
             }}
           >
-            <TextField
-              label="First Name"
-              name="firstName"
-              value={userDetails.firstName}
-              onChange={handleUserDetailChange}
-              required
-              fullWidth
-            />
-          </Grid>
-          <Grid
-            size={{
-              xs: 12,
-              sm: 6,
-            }}
-          >
-            <TextField
-              label="Last Name"
-              name="lastName"
-              value={userDetails.lastName}
-              onChange={handleUserDetailChange}
-              required
-              fullWidth
-            />
-          </Grid>
-          <Grid
-            size={{
-              xs: 12,
-              sm: 6,
-            }}
-          >
-            <TextField
-              label="Email"
-              name="email"
-              type="email"
-              value={userDetails.email}
-              onChange={handleUserDetailChange}
-              required
-              fullWidth
-            />
-          </Grid>
-          <Grid
-            size={{
-              xs: 12,
-              sm: 6,
-            }}
-          >
-            <TextField
-              label="Phone"
-              name="phone"
-              value={userDetails.phone}
-              onChange={handleUserDetailChange}
-              fullWidth
-            />
-          </Grid>
-        </Grid>
-
-        {/* Packs Accordion */}
-        <Accordion>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle1" fontWeight="bold">
-              Select a Pack
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            {packsLoading ? (
-              <CircularProgress size={24} />
-            ) : packsError ? (
-              <Alert severity="error">{packsError}</Alert>
-            ) : packs.length > 0 ? (
-              <RadioGroup
-                name="pack"
-                value={selectedPack}
-                onChange={(e) => setSelectedPack(e.target.value)}
+            Sign in or Sign up to Register for {activity?.title}
+          </DialogTitle>
+          <DialogContent>
+            <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+              <Tabs
+                value={authTab}
+                onChange={(e, newValue) => setAuthTab(newValue)}
+                centered
+                sx={{
+                  "& .MuiTab-root": {
+                    textTransform: "none",
+                    fontSize: "1rem",
+                    fontWeight: 600,
+                  },
+                }}
               >
-                {packs.map((pack) => (
-                  <FormControlLabel
-                    key={pack.id}
-                    value={pack.id}
-                    control={<Radio />}
-                    label={
-                      <Stack>
-                        <Typography fontWeight={600}>
-                          {pack.title}({pack.classType}){" "}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          ₹{pack.price} &nbsp;•&nbsp; {pack.numberOfSessions}{" "}
-                          session
-                          {pack.numberOfSessions > 1 ? "s" : ""} &nbsp;•&nbsp;
-                          {pack.duration} days
-                        </Typography>
-                      </Stack>
-                    }
-                    sx={{ alignItems: "flex-start", mb: 1 }}
-                  />
-                ))}
-              </RadioGroup>
-            ) : (
-              <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
-                No packs available.
-              </Typography>
-            )}
-          </AccordionDetails>
-        </Accordion>
+                <Tab label="Sign In" />
+                <Tab label="Sign Up" />
+              </Tabs>
+            </Box>
 
-        {/* Schedules Accordion */}
-        <Accordion>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle1" fontWeight="bold">
-              Select a Schedule
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            {schedulesLoading ? (
-              <CircularProgress size={24} />
-            ) : schedulesError ? (
-              <Alert severity="error">{schedulesError}</Alert>
-            ) : schedules.length > 0 ? (
-              <RadioGroup
-                name="schedule"
-                value={selectedSchedule}
-                onChange={(e) => setSelectedSchedule(e.target.value)}
+            {formError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {formError}
+              </Alert>
+            )}
+
+            {authTab === 0 ? (
+              <SignInForm
+                onSuccess={handleAuthSuccess}
+                onError={(error) => setFormError(error)}
+                disableNavigation={true}
+              />
+            ) : (
+              <SignUpForm
+                onSuccess={handleAuthSuccess}
+                onError={(error) => setFormError(error)}
+                disableNavigation={true}
+              />
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={onClose}>Cancel</Button>
+          </DialogActions>
+        </>
+      ) : (
+        // Show registration form if user is authenticated
+        <>
+          <DialogTitle>Register for {activity?.title}</DialogTitle>
+          <DialogContent
+            sx={{
+              maxHeight: "70vh",
+              overflowY: "auto",
+              "&::-webkit-scrollbar": {
+                width: "8px",
+              },
+              "&::-webkit-scrollbar-track": {
+                background: "#f1f1f1",
+                borderRadius: "4px",
+              },
+              "&::-webkit-scrollbar-thumb": {
+                background: "#c1c1c1",
+                borderRadius: "4px",
+                "&:hover": {
+                  background: "#a8a8a8",
+                },
+              },
+            }}
+          >
+            {formError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {formError}
+              </Alert>
+            )}
+
+            {/* User Detail Inputs in Grid */}
+            <Grid container spacing={2} mb={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6,
+                }}
               >
-                {schedules.map((sched) => (
-                  <FormControlLabel
-                    key={sched.id}
-                    value={sched.id}
-                    control={<Radio />}
-                    label={`${dayOfWeekLabels[sched.dayOfWeek]}, ${
-                      sched.startTime
-                    } - ${sched.endTime}`}
-                    sx={{ alignItems: "flex-start", mb: 1 }}
-                  />
-                ))}
-              </RadioGroup>
-            ) : (
-              <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
-                No schedules available.
-              </Typography>
-            )}
-          </AccordionDetails>
-        </Accordion>
+                <TextField
+                  label="First Name"
+                  name="firstName"
+                  value={userDetails.firstName}
+                  onChange={handleUserDetailChange}
+                  required
+                  fullWidth
+                />
+              </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6,
+                }}
+              >
+                <TextField
+                  label="Last Name"
+                  name="lastName"
+                  value={userDetails.lastName}
+                  onChange={handleUserDetailChange}
+                  required
+                  fullWidth
+                />
+              </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6,
+                }}
+              >
+                <TextField
+                  label="Email"
+                  name="email"
+                  type="email"
+                  value={userDetails.email}
+                  onChange={handleUserDetailChange}
+                  required
+                  fullWidth
+                />
+              </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6,
+                }}
+              >
+                <TextField
+                  label="Phone"
+                  name="phone"
+                  value={userDetails.phone}
+                  onChange={handleUserDetailChange}
+                  fullWidth
+                />
+              </Grid>
+            </Grid>
 
-        {/* Add-ons Accordion */}
-        <Accordion>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle1" fontWeight="bold">
-              Select Add-ons (optional)
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            {addons.length > 0 ? (
-              <FormGroup>
-                <Grid container spacing={1}>
-                  {addons.map((addon) => (
-                    <Grid
-                      size={{
-                        xs: 12,
-                        sm: 6,
-                      }}
-                      md={4}
-                      key={addon.id}
-                    >
+            {/* Packs Accordion */}
+            <Accordion>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  Select a Pack
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                {packsLoading ? (
+                  <CircularProgress size={24} />
+                ) : packsError ? (
+                  <Alert severity="error">{packsError}</Alert>
+                ) : packs.length > 0 ? (
+                  <RadioGroup
+                    name="pack"
+                    value={selectedPack}
+                    onChange={(e) => setSelectedPack(e.target.value)}
+                  >
+                    {packs.map((pack) => (
                       <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={selectedAddOns.includes(addon.id)}
-                            onChange={() => handleAddOnChange(addon.id)}
-                          />
+                        key={pack.id}
+                        value={pack.id}
+                        control={<Radio />}
+                        label={
+                          <Stack>
+                            <Typography fontWeight={600}>
+                              {pack.title}({pack.classType}){" "}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              ₹{pack.price} &nbsp;•&nbsp;{" "}
+                              {pack.numberOfSessions} session
+                              {pack.numberOfSessions > 1 ? "s" : ""}{" "}
+                              &nbsp;•&nbsp;
+                              {pack.duration} days
+                            </Typography>
+                          </Stack>
                         }
-                        label={`${addon.name} - ₹${addon.price}`}
+                        sx={{ alignItems: "flex-start", mb: 1 }}
                       />
-                    </Grid>
-                  ))}
-                </Grid>
-              </FormGroup>
-            ) : (
-              <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
-                No add-ons available.
-              </Typography>
-            )}
-          </AccordionDetails>
-        </Accordion>
-      </DialogContent>
+                    ))}
+                  </RadioGroup>
+                ) : (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ ml: 2 }}
+                  >
+                    No packs available.
+                  </Typography>
+                )}
+              </AccordionDetails>
+            </Accordion>
 
-      <DialogActions>
-        <Button onClick={onClose} color="secondary" disabled={submitLoading}>
-          Cancel
-        </Button>
-        <Button
-          onClick={handleProceedToPayment}
-          variant="contained"
-          disabled={!selectedPack || submitLoading}
-        >
-          {submitLoading ? "Processing..." : "Proceed to Payment"}
-        </Button>
-      </DialogActions>
+            {/* Schedules Accordion */}
+            <Accordion>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  Select a Schedule
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                {schedulesLoading ? (
+                  <CircularProgress size={24} />
+                ) : schedulesError ? (
+                  <Alert severity="error">{schedulesError}</Alert>
+                ) : schedules.length > 0 ? (
+                  <RadioGroup
+                    name="schedule"
+                    value={selectedSchedule}
+                    onChange={(e) => setSelectedSchedule(e.target.value)}
+                  >
+                    {schedules.map((sched) => (
+                      <FormControlLabel
+                        key={sched.id}
+                        value={sched.id}
+                        control={<Radio />}
+                        label={`${dayOfWeekLabels[sched.dayOfWeek]}, ${
+                          sched.startTime
+                        } - ${sched.endTime}`}
+                        sx={{ alignItems: "flex-start", mb: 1 }}
+                      />
+                    ))}
+                  </RadioGroup>
+                ) : (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ ml: 2 }}
+                  >
+                    No schedules available.
+                  </Typography>
+                )}
+              </AccordionDetails>
+            </Accordion>
+
+            {/* Add-ons Accordion */}
+            <Accordion>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  Select Add-ons (optional)
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                {addons.length > 0 ? (
+                  <FormGroup>
+                    <Grid container spacing={1}>
+                      {addons.map((addon) => (
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 6,
+                          }}
+                          md={4}
+                          key={addon.id}
+                        >
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={selectedAddOns.includes(addon.id)}
+                                onChange={() => handleAddOnChange(addon.id)}
+                              />
+                            }
+                            label={`${addon.name} - ₹${addon.price}`}
+                          />
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </FormGroup>
+                ) : (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ ml: 2 }}
+                  >
+                    No add-ons available.
+                  </Typography>
+                )}
+              </AccordionDetails>
+            </Accordion>
+          </DialogContent>
+
+          <DialogActions>
+            <Button
+              onClick={onClose}
+              color="secondary"
+              disabled={submitLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleProceedToPayment}
+              variant="contained"
+              disabled={!selectedPack || submitLoading}
+            >
+              {submitLoading ? "Processing..." : "Proceed to Payment"}
+            </Button>
+          </DialogActions>
+        </>
+      )}
     </Box>
   );
 };

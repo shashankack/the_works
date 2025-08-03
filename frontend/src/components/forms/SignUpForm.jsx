@@ -25,7 +25,7 @@ import { setToken, setUser } from "../../utils/auth";
 import { getCurrentUser } from "../../api/userService";
 import { useNavigate } from "react-router-dom";
 
-const SignUpForm = ({ onSuccess, onError }) => {
+const SignUpForm = ({ onSuccess, onError, disableNavigation = false }) => {
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -98,18 +98,21 @@ const SignUpForm = ({ onSuccess, onError }) => {
         });
       }
 
-      if (onSuccess) onSuccess();
+      if (onSuccess) onSuccess(res.data);
 
-      // Check if there's a pending registration
-      const pendingRegistration = sessionStorage.getItem("pendingRegistration");
-      if (pendingRegistration) {
-        // Clear the pending registration
-        sessionStorage.removeItem("pendingRegistration");
-        // Navigate back to home and let the registration flow continue
-        navigate("/");
-      } else {
-        // Default navigation
-        navigate("/"); // Navigate to home instead of dashboard for users
+      // Navigate only if navigation is not disabled
+      if (!disableNavigation) {
+        // Check if there's a pending registration
+        const pendingRegistration = sessionStorage.getItem("pendingRegistration");
+        if (pendingRegistration) {
+          // Clear the pending registration
+          sessionStorage.removeItem("pendingRegistration");
+          // Navigate back to home and let the registration flow continue
+          navigate("/");
+        } else {
+          // Default navigation
+          navigate("/"); // Navigate to home instead of dashboard for users
+        }
       }
     } catch (err) {
       const msg =
