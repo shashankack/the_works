@@ -23,6 +23,11 @@ const app = new Hono();
 
 app.use("*", cors());
 
+// Handle preflight requests explicitly
+app.options("*", (c) => {
+  return new Response(null, { status: 204 });
+});
+
 app.route("/api/addons", addonRoutes);
 app.route("/api/attendance", attendanceRoutes);
 app.route("/api/auth", auth);
