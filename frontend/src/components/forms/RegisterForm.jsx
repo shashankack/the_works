@@ -66,14 +66,14 @@ const RegisterForm = ({ addons = [], activity, onClose, onSubmit }) => {
   const [formError, setFormError] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [userLoading, setUserLoading] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
   const [authTab, setAuthTab] = useState(0); // 0 for signin, 1 for signup
 
   // Check authentication status and auto-fill user details if authenticated
   useEffect(() => {
     const checkAuthAndFetchUserData = async () => {
       const authenticated = isAuthenticated();
-      setIsAuthenticated(authenticated);
+      setIsUserAuthenticated(authenticated);
 
       if (authenticated) {
         setUserLoading(true);
@@ -124,7 +124,7 @@ const RegisterForm = ({ addons = [], activity, onClose, onSubmit }) => {
       });
 
       // Update local state
-      setIsAuthenticated(true);
+      setIsUserAuthenticated(true);
       setUserDetails({
         firstName: data.user.firstName || "",
         lastName: data.user.lastName || "",
@@ -181,7 +181,7 @@ const RegisterForm = ({ addons = [], activity, onClose, onSubmit }) => {
 
   return (
     <Box>
-      {!isAuthenticated ? (
+      {!isUserAuthenticated ? (
         // Show authentication forms if user is not authenticated
         <>
           <DialogTitle

@@ -21,6 +21,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import { useState } from "react";
 import useClassSchedules from "../../hooks/useClassSchedules";
+import { useAdminRefresh } from "../../hooks/useAdminRefresh";
 import ClassScheduleDialog from "../forms/ClassScheduleDialog";
 
 const ClassScheduleManager = () => {
@@ -32,10 +33,17 @@ const ClassScheduleManager = () => {
     updateSchedule,
     deactivateSchedule,
     toggleActiveSchedule,
+    refetch: fetchSchedules,
   } = useClassSchedules(); // no classId
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState(null);
+
+  // Listen for global refresh events from navbar
+  useAdminRefresh(() => {
+    console.log('ClassScheduleManager: Received admin refresh event');
+    fetchSchedules();
+  });
 
   const handleEdit = (schedule) => {
     setEditingSchedule(schedule);

@@ -1,10 +1,11 @@
 import { Hono } from "hono";
 import { nanoid } from "nanoid";
 import { getDB, Env } from "@/db/client";
-import { bookings, bookingAddOns } from "@/db/schema";
+import { bookings, bookingAddOns, users, classes, events } from "@/db/schema";
 import { authMiddleware } from "@/middleware/auth";
 import { eq } from "drizzle-orm";
 import { validate, bookingSchema } from "@/middleware/validate";
+import { sendBookingStatusEmail } from "@/lib/email";
 
 // Define the context variables that our middleware will set
 type Variables = {
@@ -159,12 +160,72 @@ bookingRoutes.put("/:id/confirm", authMiddleware("admin"), async (c) => {
   const db = getDB(c.env);
   const id = c.req.param("id");
 
+  // Get booking details first
+  const booking = await db.query.bookings.findFirst({
+    where: eq(bookings.id, id),
+  });
+
+  if (!booking) {
+    return c.json({ error: "Booking not found" }, 404);
+  }
+
+  // Get user details separately
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, booking.userId),
+  });
+
+  if (!user) {
+    return c.json({ error: "User not found for this booking" }, 404);
+  }
+
+  // Update booking status
   await db
     .update(bookings)
     .set({ status: "confirmed" })
     .where(eq(bookings.id, id));
 
-  return c.json({ message: "Booking confirmed" });
+  // Get class or event details for better email
+  let itemName = "Your Booking";
+  let itemType: "class" | "event" = "class";
+  let scheduleDate = new Date().toISOString();
+
+  if (booking.classId) {
+    const classDetails = await db.query.classes.findFirst({
+      where: eq(classes.id, booking.classId),
+    });
+    if (classDetails) {
+      itemName = classDetails.title;
+    }
+    itemType = "class";
+  } else if (booking.eventId) {
+    const eventDetails = await db.query.events.findFirst({
+      where: eq(events.id, booking.eventId),
+    });
+    if (eventDetails) {
+      itemName = eventDetails.title;
+      scheduleDate = eventDetails.startDateTime;
+    }
+    itemType = "event";
+  }
+
+  // Send confirmation email
+  try {
+    await sendBookingStatusEmail({
+      to: user.email,
+      name: user.firstName || "Customer",
+      itemType,
+      itemName,
+      status: "confirmed",
+      dateTime: scheduleDate,
+      resendApiKey: c.env.RESEND_API_KEY,
+    });
+    console.log(`Confirmation email sent to ${user.email} for booking ${id}`);
+  } catch (emailError) {
+    console.error("Failed to send confirmation email:", emailError);
+    // Don't fail the booking confirmation if email fails
+  }
+
+  return c.json({ message: "Booking confirmed and notification email sent" });
 });
 
 // ✅ Admin: cancel booking
@@ -172,12 +233,72 @@ bookingRoutes.put("/:id/cancel", authMiddleware("admin"), async (c) => {
   const db = getDB(c.env);
   const id = c.req.param("id");
 
+  // Get booking details first
+  const booking = await db.query.bookings.findFirst({
+    where: eq(bookings.id, id),
+  });
+
+  if (!booking) {
+    return c.json({ error: "Booking not found" }, 404);
+  }
+
+  // Get user details separately
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, booking.userId),
+  });
+
+  if (!user) {
+    return c.json({ error: "User not found for this booking" }, 404);
+  }
+
+  // Update booking status
   await db
     .update(bookings)
     .set({ status: "cancelled" })
     .where(eq(bookings.id, id));
 
-  return c.json({ message: "Booking cancelled" });
+  // Get class or event details for better email
+  let itemName = "Your Booking";
+  let itemType: "class" | "event" = "class";
+  let scheduleDate = new Date().toISOString();
+
+  if (booking.classId) {
+    const classDetails = await db.query.classes.findFirst({
+      where: eq(classes.id, booking.classId),
+    });
+    if (classDetails) {
+      itemName = classDetails.title;
+    }
+    itemType = "class";
+  } else if (booking.eventId) {
+    const eventDetails = await db.query.events.findFirst({
+      where: eq(events.id, booking.eventId),
+    });
+    if (eventDetails) {
+      itemName = eventDetails.title;
+      scheduleDate = eventDetails.startDateTime;
+    }
+    itemType = "event";
+  }
+
+  // Send cancellation email
+  try {
+    await sendBookingStatusEmail({
+      to: user.email,
+      name: user.firstName || "Customer",
+      itemType,
+      itemName,
+      status: "cancelled",
+      dateTime: scheduleDate,
+      resendApiKey: c.env.RESEND_API_KEY,
+    });
+    console.log(`Cancellation email sent to ${user.email} for booking ${id}`);
+  } catch (emailError) {
+    console.error("Failed to send cancellation email:", emailError);
+    // Don't fail the booking cancellation if email fails
+  }
+
+  return c.json({ message: "Booking cancelled and notification email sent" });
 });
 
 export default bookingRoutes;

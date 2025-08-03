@@ -393,6 +393,24 @@ const EnquiriesManager = () => {
                     >
                       View Details
                     </Button>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<EmailIcon />}
+                      href={`mailto:${enquiry.email}?subject=Re: Your enquiry&body=Hi ${enquiry.name},%0D%0A%0D%0AThank you for contacting The Works. `}
+                      component="a"
+                      target="_blank"
+                      sx={{
+                        borderColor: "secondary.main",
+                        color: "secondary.main",
+                        "&:hover": {
+                          borderColor: "secondary.main",
+                          backgroundColor: "rgba(78, 41, 22, 0.04)",
+                        },
+                      }}
+                    >
+                      Reply
+                    </Button>
                     <IconButton
                       size="small"
                       onClick={() => handleDeleteClick(enquiry)}

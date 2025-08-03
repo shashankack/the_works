@@ -29,6 +29,7 @@ import EmailIcon from "@mui/icons-material/Email";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import TrainerForm from "../../components/forms/TrainersForm";
 import { useCachedTrainers } from "../../hooks/useCachedTrainers";
+import { useAdminRefresh } from "../../hooks/useAdminRefresh";
 import { useState } from "react";
 
 const TrainersManagePage = () => {
@@ -48,6 +49,12 @@ const TrainersManagePage = () => {
 
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(null);
+
+  // Listen for global refresh events from navbar
+  useAdminRefresh(() => {
+    console.log('TrainersManagePage: Received admin refresh event');
+    fetchTrainers();
+  });
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [trainerToDelete, setTrainerToDelete] = useState(null);
 

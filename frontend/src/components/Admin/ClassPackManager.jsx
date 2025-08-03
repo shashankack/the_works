@@ -21,6 +21,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import { useState } from "react";
 import useClassPacks from "../../hooks/useClassPacks";
+import { useAdminRefresh } from "../../hooks/useAdminRefresh";
 import ClassPackDialog from "../forms/ClassPackForm";
 
 const ClassPackManager = () => {
@@ -32,10 +33,17 @@ const ClassPackManager = () => {
     updatePack,
     deactivatePack,
     toggleActivePack,
+    refetch: fetchPacks,
   } = useClassPacks(); // no classId
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPack, setEditingPack] = useState(null);
+
+  // Listen for global refresh events from navbar
+  useAdminRefresh(() => {
+    console.log('ClassPackManager: Received admin refresh event');
+    fetchPacks();
+  });
 
   const handleEdit = (pack) => {
     setEditingPack(pack);

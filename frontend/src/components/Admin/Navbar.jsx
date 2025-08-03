@@ -14,10 +14,13 @@ import {
   Button,
   Avatar,
   Divider,
+  Tooltip,
+  CircularProgress,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import LogoutIcon from "@mui/icons-material/Logout";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PeopleIcon from "@mui/icons-material/People";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
@@ -28,6 +31,14 @@ import { Link as RouterLink } from "react-router-dom";
 import { logout } from "../../utils/auth";
 import useEnquiries from "../../hooks/useEnquiries";
 import useBookings from "../../hooks/useBookings";
+import { useCache } from "../../context/CacheContext";
+
+// Global refresh event to notify all admin components
+const createRefreshEvent = () => {
+  return new CustomEvent('adminRefreshAll', {
+    detail: { timestamp: Date.now() }
+  });
+};
 
 const drawerWidth = 240;
 
@@ -65,10 +76,14 @@ const Navbar = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState(null);
+  const [tooltipKey, setTooltipKey] = useState(0); // Force tooltip updates
   const { enquiries, fetchEnquiries } = useEnquiries();
   const { bookings, fetchData: fetchBookings } = useBookings({
     adminMode: true,
   });
+  const { clearAllCache } = useCache();
 
   // Calculate pending enquiries count (new enquiries without status)
   const pendingEnquiriesCount = enquiries.filter(
@@ -86,7 +101,97 @@ const Navbar = () => {
     fetchBookings();
   }, []);
 
+  // Update tooltip every 30 seconds to show accurate "time ago"
+  useEffect(() => {
+    if (lastRefresh) {
+      const interval = setInterval(() => {
+        setTooltipKey(prev => prev + 1); // Force tooltip re-render
+      }, 30000); // Update every 30 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [lastRefresh]);
+
   const toggleDrawer = () => setMobileOpen(!mobileOpen);
+
+  // Refresh all data function
+  const handleRefreshAll = async () => {
+    setRefreshing(true);
+    try {
+      console.log('🔄 Starting comprehensive data refresh...');
+      
+      // Step 1: Clear all cached data
+      clearAllCache();
+      console.log('✅ Cache cleared');
+      
+      // Step 2: Refresh local navbar data
+      const refreshPromises = [
+        fetchEnquiries(),
+        fetchBookings()
+      ];
+      
+      await Promise.all(refreshPromises);
+      console.log('✅ Navbar data refreshed');
+      
+      // Step 3: Dispatch global refresh event for other components
+      window.dispatchEvent(createRefreshEvent());
+      console.log('✅ Global refresh event dispatched');
+      
+      // Step 4: Update last refresh timestamp
+      const newRefreshTime = new Date();
+      setLastRefresh(newRefreshTime);
+      
+      // Force immediate tooltip/button text update
+      setTooltipKey(prev => prev + 1);
+      
+      // Step 5: Show success feedback
+      console.log('🎉 All data refreshed successfully!');
+      
+      // You could add a toast notification here if you have a notification system
+      
+    } catch (error) {
+      console.error('❌ Error refreshing data:', error);
+      // You could show an error notification here
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Format last refresh time for tooltip/button text
+  const getRefreshTooltip = () => {
+    if (refreshing) {
+      return "Refreshing all data...";
+    }
+    if (lastRefresh) {
+      const timeAgo = Math.round((Date.now() - lastRefresh.getTime()) / 1000);
+      if (timeAgo < 60) {
+        return `Refresh all data (last: ${timeAgo}s ago)`;
+      } else if (timeAgo < 3600) {
+        return `Refresh all data (last: ${Math.round(timeAgo / 60)}m ago)`;
+      } else {
+        return `Refresh all data (last: ${Math.round(timeAgo / 3600)}h ago)`;
+      }
+    }
+    return "Refresh all data from APIs";
+  };
+
+  // Get mobile button text with timestamp
+  const getMobileRefreshText = () => {
+    if (refreshing) {
+      return "Refreshing...";
+    }
+    if (lastRefresh) {
+      const timeAgo = Math.round((Date.now() - lastRefresh.getTime()) / 1000);
+      if (timeAgo < 60) {
+        return `Refresh All (${timeAgo}s ago)`;
+      } else if (timeAgo < 3600) {
+        return `Refresh All (${Math.round(timeAgo / 60)}m ago)`;
+      } else {
+        return `Refresh All (${Math.round(timeAgo / 3600)}h ago)`;
+      }
+    }
+    return "Refresh All Data";
+  };
 
   const renderLink = ({ label, to, showBadge, icon: Icon }) => {
     const badgeCount =
@@ -290,31 +395,69 @@ const Navbar = () => {
           )}
 
           {/* Right Section */}
-          <Button
-            onClick={() => logout()}
-            startIcon={<LogoutIcon />}
-            sx={{
-              color: "text.white",
-              textTransform: "none",
-              fontFamily: "Average Sans, sans-serif",
-              fontWeight: 500,
-              fontSize: "16px",
-              px: 3,
-              py: 1,
-              borderRadius: 2,
-              border: "2px solid",
-              borderColor: "text.white",
-              transition: "all 0.3s ease",
-              "&:hover": {
-                backgroundColor: "text.white",
-                color: "primary.main",
-                transform: "translateY(-1px)",
-                boxShadow: "0 4px 12px rgba(227, 222, 211, 0.3)",
-              },
-            }}
-          >
-            Logout
-          </Button>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {/* Refresh Button */}
+            <Tooltip 
+              title={getRefreshTooltip()}
+              key={tooltipKey}
+            >
+              <IconButton
+                onClick={handleRefreshAll}
+                disabled={refreshing}
+                sx={{
+                  color: "text.white",
+                  border: "2px solid",
+                  borderColor: "text.white",
+                  borderRadius: 2,
+                  p: 1,
+                  transition: "all 0.3s ease",
+                  "&:hover": {
+                    backgroundColor: "text.white",
+                    color: "primary.main",
+                    transform: "translateY(-1px)",
+                    boxShadow: "0 4px 12px rgba(227, 222, 211, 0.3)",
+                  },
+                  "&:disabled": {
+                    borderColor: "rgba(255, 255, 255, 0.5)",
+                    color: "rgba(255, 255, 255, 0.5)",
+                  },
+                }}
+              >
+                {refreshing ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  <RefreshIcon />
+                )}
+              </IconButton>
+            </Tooltip>
+
+            {/* Logout Button */}
+            <Button
+              onClick={() => logout()}
+              startIcon={<LogoutIcon />}
+              sx={{
+                color: "text.white",
+                textTransform: "none",
+                fontFamily: "Average Sans, sans-serif",
+                fontWeight: 500,
+                fontSize: "16px",
+                px: 3,
+                py: 1,
+                borderRadius: 2,
+                border: "2px solid",
+                borderColor: "text.white",
+                transition: "all 0.3s ease",
+                "&:hover": {
+                  backgroundColor: "text.white",
+                  color: "primary.main",
+                  transform: "translateY(-1px)",
+                  boxShadow: "0 4px 12px rgba(227, 222, 211, 0.3)",
+                },
+              }}
+            >
+              Logout
+            </Button>
+          </Box>
         </Toolbar>
       </AppBar>
 
@@ -395,8 +538,40 @@ const Navbar = () => {
 
           <Divider sx={{ borderColor: "rgba(177, 83, 36, 0.2)" }} />
 
-          {/* Logout Button in Drawer */}
-          <Box sx={{ p: 2 }}>
+          {/* Action Buttons in Drawer */}
+          <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 1 }}>
+            {/* Refresh Button */}
+            <Button
+              key={`mobile-refresh-${tooltipKey}`}
+              onClick={handleRefreshAll}
+              startIcon={refreshing ? <CircularProgress size={16} color="inherit" /> : <RefreshIcon />}
+              disabled={refreshing}
+              fullWidth
+              sx={{
+                color: "secondary.main",
+                textTransform: "none",
+                fontFamily: "Average Sans, sans-serif",
+                fontWeight: 500,
+                fontSize: "16px",
+                py: 1.5,
+                borderRadius: 2,
+                border: "2px solid",
+                borderColor: "secondary.main",
+                transition: "all 0.3s ease",
+                "&:hover": {
+                  backgroundColor: "secondary.main",
+                  color: "text.white",
+                },
+                "&:disabled": {
+                  borderColor: "rgba(78, 41, 22, 0.3)",
+                  color: "rgba(78, 41, 22, 0.3)",
+                },
+              }}
+            >
+              {getMobileRefreshText()}
+            </Button>
+
+            {/* Logout Button */}
             <Button
               onClick={logout}
               startIcon={<LogoutIcon />}

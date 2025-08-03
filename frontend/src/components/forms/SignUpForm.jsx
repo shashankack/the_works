@@ -85,20 +85,31 @@ const SignUpForm = ({ onSuccess, onError, disableNavigation = false }) => {
       setToken(res.data.accessToken, res.data.refreshToken);
 
       // 3. Fetch user data using the token
+      let finalUserData;
       try {
         const userData = await getCurrentUser();
         setUser(userData);
+        finalUserData = userData;
       } catch (userError) {
         console.error("Failed to fetch user data:", userError);
         // Fallback to form data since registration was successful
-        setUser({
+        const fallbackUser = {
           firstName: form.firstName.trim(),
           lastName: form.lastName.trim(),
           email: form.email.trim(),
-        });
+          phone: form.phone.trim(),
+        };
+        setUser(fallbackUser);
+        finalUserData = fallbackUser;
       }
 
-      if (onSuccess) onSuccess(res.data);
+      // Call onSuccess with the complete data structure expected by RegisterForm
+      if (onSuccess) {
+        onSuccess({
+          ...res.data,
+          user: finalUserData
+        });
+      }
 
       // Navigate only if navigation is not disabled
       if (!disableNavigation) {

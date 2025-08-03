@@ -42,6 +42,7 @@ import { useClasses } from "../../hooks/useClasses";
 import useClassPacks from "../../hooks/useClassPacks";
 import { useEvents } from "../../hooks/useEvents";
 import useBookings from "../../hooks/useBookingsCached";
+import { useAdminRefresh } from "../../hooks/useAdminRefresh";
 
 const BookingsManagePage = () => {
   const theme = useTheme();
@@ -73,6 +74,12 @@ const BookingsManagePage = () => {
   const { classes } = useClasses();
   const { packs } = useClassPacks();
   const { events } = useEvents();
+
+  // Listen for global refresh events from navbar
+  useAdminRefresh(() => {
+    console.log('BookingsManagePage: Received admin refresh event');
+    refetchBookings();
+  });
 
   // Helper functions to get detailed information
   const getUserDetails = (userId) => {
@@ -143,7 +150,7 @@ const BookingsManagePage = () => {
 
     try {
       const token = getToken("accessToken");
-      await axiosInstance.put(
+      const response = await axiosInstance.put(
         `/bookings/${bookingId}/${action}`,
         {},
         {
@@ -153,11 +160,15 @@ const BookingsManagePage = () => {
         }
       );
 
-      // Refresh bookings list
-      await fetchBookings();
+      // Refresh bookings list using the correct function
+      await refetchBookings();
       setDetailsOpen(false);
       setSelectedBooking(null);
+      
+      // Show success message
+      console.log(`Booking ${action}ed successfully:`, response.data);
     } catch (err) {
+      console.error(`Failed to ${action} booking:`, err);
       setActionError(
         err.response?.data?.error || `Failed to ${action} booking`
       );

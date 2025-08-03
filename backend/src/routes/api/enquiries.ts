@@ -5,6 +5,7 @@ import { nanoid } from "nanoid";
 import { authMiddleware } from "@/middleware/auth";
 import { validate, enquirySchema } from "@/middleware/validate";
 import { eq } from "drizzle-orm";
+import { sendEnquiryNotificationEmail, sendEnquiryAutoReplyEmail } from "@/lib/email";
 
 export const enquiryRoutes = new Hono<{ Bindings: Env }>();
 
@@ -31,8 +32,30 @@ enquiryRoutes.post("/", validate(enquirySchema), async (c) => {
 
   await db.insert(enquiries).values(newEnquiry);
 
-  // 🔔 Optional: Send email using Resend
-  // await resend.emails.send({ to: 'admin@example.com', subject: 'New Enquiry', ... })
+  // 🔔 Send notification email to admin
+  try {
+    await sendEnquiryNotificationEmail({
+      name: body.name,
+      email: body.email,
+      phone: body.phone,
+      message: body.message,
+      to: "admin@theworks.fitness", // Replace with your admin email
+    });
+  } catch (emailError) {
+    console.error("Failed to send admin notification email:", emailError);
+    // Don't fail the enquiry creation if email fails
+  }
+
+  // 🔔 Send auto-reply to user
+  try {
+    await sendEnquiryAutoReplyEmail({
+      name: body.name,
+      email: body.email,
+    });
+  } catch (emailError) {
+    console.error("Failed to send auto-reply email:", emailError);
+    // Don't fail the enquiry creation if email fails
+  }
 
   return c.json({ success: true });
 });
