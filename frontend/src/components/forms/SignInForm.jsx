@@ -46,17 +46,25 @@ const SignInForm = ({ onSuccess, onError, disableNavigation = false }) => {
       // 2. Save tokens
       setToken(res.data.accessToken, res.data.refreshToken);
 
-      // 3. Fetch user data using the token
+      // 3. Small delay to ensure token is saved, then fetch user data
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      let userData = null;
       try {
-        const userData = await getCurrentUser();
+        userData = await getCurrentUser();
         setUser(userData);
+        console.log("SignInForm - User data fetched successfully:", userData);
       } catch (userError) {
-        console.error("Failed to fetch user data:", userError);
+        console.error("SignInForm - Failed to fetch user data:", userError);
         // Continue anyway since login was successful
       }
 
       if (onSuccess) {
-        onSuccess(res.data);
+        // Pass both token data and user data
+        onSuccess({
+          ...res.data,
+          user: userData
+        });
       }
 
       // Navigate only if navigation is not disabled

@@ -11,9 +11,10 @@ import {
   Container,
   IconButton,
 } from "@mui/material";
-import { Menu as MenuIcon, Close as CloseIcon } from "@mui/icons-material";
+import { Menu as MenuIcon, Close as CloseIcon, Logout as LogoutIcon } from "@mui/icons-material";
 import { useLocation } from "react-router-dom";
 import TextAnimation from "./TextAnimation";
+import { isAuthenticated, logout, getUser } from "../utils/auth";
 
 import logo from "../assets/images/beige_logo.png";
 
@@ -24,6 +25,8 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+  const [userAuthenticated, setUserAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -59,6 +62,33 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Check authentication status
+  useEffect(() => {
+    const checkAuthStatus = () => {
+      const authenticated = isAuthenticated();
+      setUserAuthenticated(authenticated);
+      if (authenticated) {
+        const user = getUser();
+        setCurrentUser(user);
+      } else {
+        setCurrentUser(null);
+      }
+    };
+
+    // Check on component mount
+    checkAuthStatus();
+
+    // Listen for storage changes (in case user logs in/out in another tab)
+    const handleStorageChange = (e) => {
+      if (e.key === 'token' || e.key === 'user') {
+        checkAuthStatus();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   const navItems = [
     { name: "HOME", sectionId: "hero-section" },
     { name: "ABOUT US", sectionId: "about-section" },
@@ -85,6 +115,13 @@ const Header = () => {
         behavior: "smooth",
       });
     }
+    setIsDrawerOpen(false);
+  };
+
+  const handleSignOut = () => {
+    logout();
+    setUserAuthenticated(false);
+    setCurrentUser(null);
     setIsDrawerOpen(false);
   };
 
@@ -166,6 +203,34 @@ const Header = () => {
                     linkHref={`/#${item.sectionId}`}
                   />
                 ))}
+                
+                {/* Sign Out Button for Desktop */}
+                {userAuthenticated && (
+                  <Button
+                    onClick={handleSignOut}
+                    startIcon={<LogoutIcon />}
+                    sx={{
+                      color: "background.default",
+                      textTransform: "none",
+                      fontFamily: "Average Sans, sans-serif",
+                      fontWeight: 500,
+                      fontSize: "14px",
+                      px: 2,
+                      py: 1,
+                      borderRadius: 2,
+                      border: "1px solid",
+                      borderColor: "background.default",
+                      transition: "all 0.3s ease",
+                      "&:hover": {
+                        backgroundColor: "background.default",
+                        color: "primary.main",
+                        transform: "translateY(-1px)",
+                      },
+                    }}
+                  >
+                    {currentUser?.firstName ? `Sign Out (${currentUser.firstName})` : "Sign Out"}
+                  </Button>
+                )}
               </Stack>
             )}
 
@@ -243,6 +308,34 @@ const Header = () => {
                 {item.name}
               </Typography>
             ))}
+            
+            {/* Sign Out Button for Mobile */}
+            {userAuthenticated && (
+              <Button
+                onClick={handleSignOut}
+                startIcon={<LogoutIcon />}
+                sx={{
+                  color: "primary.main",
+                  textTransform: "none",
+                  fontFamily: "Average Sans, sans-serif",
+                  fontWeight: 500,
+                  fontSize: "16px",
+                  py: 1.5,
+                  mt: 2,
+                  borderRadius: 2,
+                  border: "2px solid",
+                  borderColor: "primary.main",
+                  transition: "all 0.3s ease",
+                  "&:hover": {
+                    backgroundColor: "primary.main",
+                    color: "background.default",
+                  },
+                }}
+                fullWidth
+              >
+                {currentUser?.firstName ? `Sign Out (${currentUser.firstName})` : "Sign Out"}
+              </Button>
+            )}
           </Stack>
         </Box>
       </Drawer>

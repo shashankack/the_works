@@ -84,14 +84,18 @@ const SignUpForm = ({ onSuccess, onError, disableNavigation = false }) => {
       // 2. Save tokens
       setToken(res.data.accessToken, res.data.refreshToken);
 
-      // 3. Fetch user data using the token
+      // 3. Small delay to ensure token is saved, then fetch user data
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       let finalUserData;
       try {
+        console.log("SignUpForm - Attempting to fetch user data...");
         const userData = await getCurrentUser();
         setUser(userData);
         finalUserData = userData;
+        console.log("SignUpForm - User data fetched successfully:", userData);
       } catch (userError) {
-        console.error("Failed to fetch user data:", userError);
+        console.error("SignUpForm - Failed to fetch user data:", userError);
         // Fallback to form data since registration was successful
         const fallbackUser = {
           firstName: form.firstName.trim(),
@@ -101,6 +105,7 @@ const SignUpForm = ({ onSuccess, onError, disableNavigation = false }) => {
         };
         setUser(fallbackUser);
         finalUserData = fallbackUser;
+        console.log("SignUpForm - Using fallback user data:", fallbackUser);
       }
 
       // Call onSuccess with the complete data structure expected by RegisterForm

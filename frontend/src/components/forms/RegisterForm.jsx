@@ -114,28 +114,59 @@ const RegisterForm = ({ addons = [], activity, onClose, onSubmit }) => {
   // Handle successful authentication
   const handleAuthSuccess = async (data) => {
     try {
+      console.log("Auth success data:", data);
+      
       // Store authentication data
       setToken(data.accessToken, data.refreshToken);
-      setUser({
-        firstName: data.user.firstName,
-        lastName: data.user.lastName,
-        email: data.user.email,
-        phone: data.user.phone,
-      });
+      
+      // Try to get user data - either from the passed data or fetch it
+      let userData = null;
+      
+      if (data.user && data.user.firstName) {
+        // User data was provided and looks valid
+        userData = data.user;
+        console.log("Using provided user data:", userData);
+      } else {
+        // No user data provided or incomplete, fetch it manually
+        console.log("No valid user data provided, fetching manually...");
+        try {
+          userData = await getCurrentUser();
+          console.log("Fetched user data:", userData);
+        } catch (fetchError) {
+          console.error("Failed to fetch user data:", fetchError);
+          throw new Error(`Could not load user profile: ${fetchError.message}`);
+        }
+      }
 
-      // Update local state
+      if (userData) {
+        setUser({
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          email: userData.email,
+          phone: userData.phone,
+        });
+
+        setUserDetails({
+          firstName: userData.firstName || "",
+          lastName: userData.lastName || "",
+          email: userData.email || "",
+          phone: userData.phone || "",
+        });
+      } else {
+        throw new Error("No user data available");
+      }
+
+      // Update authentication state
       setIsUserAuthenticated(true);
-      setUserDetails({
-        firstName: data.user.firstName || "",
-        lastName: data.user.lastName || "",
-        email: data.user.email || "",
-        phone: data.user.phone || "",
-      });
-
       setFormError(null);
     } catch (err) {
       console.error("Failed to handle authentication:", err);
-      setFormError("Authentication successful but failed to load user data.");
+      console.error("Error details:", {
+        message: err.message,
+        stack: err.stack,
+        data: data
+      });
+      setFormError(`Authentication successful but failed to load user data: ${err.message}`);
     }
   };
 

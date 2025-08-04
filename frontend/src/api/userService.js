@@ -3,31 +3,29 @@ import { getToken } from "../utils/auth";
 
 // Get current user profile
 export const getCurrentUser = async () => {
-  const accessToken = getToken("accessToken");
-  if (!accessToken) {
-    throw new Error("No access token found");
+  console.log("getCurrentUser - Starting request");
+  
+  try {
+    console.log("getCurrentUser - Making request to /auth/me");
+    const response = await axiosInstance.get("/auth/me");
+    
+    console.log("getCurrentUser - Success:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("getCurrentUser - Error:", {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      url: error.config?.url
+    });
+    throw error;
   }
-
-  const response = await axiosInstance.get("/auth/me", {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-  return response.data;
 };
 
 // Get user details by ID (admin only)
 export const getUserById = async (userId) => {
-  const accessToken = getToken("accessToken");
-  if (!accessToken) {
-    throw new Error("No access token found");
-  }
-
-  const response = await axiosInstance.get(`/users/${userId}`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
+  const response = await axiosInstance.get(`/users/${userId}`);
   return response.data;
 };
 
