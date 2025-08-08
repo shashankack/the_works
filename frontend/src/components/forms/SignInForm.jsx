@@ -4,7 +4,6 @@ import {
   Typography,
   TextField,
   Button,
-  Alert,
   CircularProgress,
   InputAdornment,
   IconButton,
@@ -104,22 +103,6 @@ const SignInForm = ({ onSuccess, onError, disableNavigation = false }) => {
           Sign in to continue your fitness journey
         </Typography>
       </Box>
-
-      {/* Error Alert */}
-      {error && (
-        <Alert
-          severity="error"
-          sx={{
-            mb: 3,
-            borderRadius: 2,
-            "& .MuiAlert-message": {
-              fontSize: "0.9rem",
-            },
-          }}
-        >
-          {error}
-        </Alert>
-      )}
 
       {/* Form */}
       <Box
